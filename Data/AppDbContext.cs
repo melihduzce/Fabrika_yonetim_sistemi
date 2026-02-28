@@ -12,4 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Product> Products { get; set; }
     public DbSet<StockTransaction> StockTransactions { get; set; }
+    
+    // YENİ EKLENEN: Hammadde ve Rulo Demir stoklarını tutacağımız tablo
+    public DbSet<Stock> Stocks { get; set; } 
 }
