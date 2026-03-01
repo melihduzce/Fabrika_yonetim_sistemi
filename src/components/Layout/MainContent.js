@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AppHeader from './AppHeader';
-import { Dashboard, Uretim, MakineEkle, Stok, UrunEkle, Personel, PersonelBilgi, PersonelEkle, SiparisOlustur, PlaceholderPage } from 'pages';
+import { Dashboard, Uretim, MakineEkle, Stok, UrunEkle, Personel, PersonelBilgi, PersonelEkle, SiparisOlustur, Muhasebe, PlaceholderPage } from 'pages';
 import { getThemeClasses } from 'utils/theme';
 import { PERSONEL_LISTESI } from 'constants/personelData';
 
@@ -29,6 +29,8 @@ const MainContent = ({ activeTab, setActiveTab, isDark, toggleTheme, userName, o
         return <Uretim isDark={isDark} onMakineEkle={() => setActiveTab('makine-ekle')} />;
       case 'siparis-olustur':
         return <SiparisOlustur isDark={isDark} />;
+      case 'muhasebe':
+        return <Muhasebe isDark={isDark} />;
       case 'makine-ekle':
         return <MakineEkle isDark={isDark} onBack={() => setActiveTab('uretim')} />;
       case 'stok':

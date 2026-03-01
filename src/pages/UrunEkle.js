@@ -32,6 +32,10 @@ const UrunEkle = ({ isDark, onBack }) => {
   const [birimUretimSuresi, setBirimUretimSuresi] = useState('');
   const [birimSureBirim, setBirimSureBirim] = useState('saat');
   const [beklenenHurdaMiktar, setBeklenenHurdaMiktar] = useState('');
+  const [brutAgirlik, setBrutAgirlik] = useState('');
+  const [netAgirlik, setNetAgirlik] = useState('');
+  const [hurdaOrani, setHurdaOrani] = useState('');
+  const [gunlukUretim, setGunlukUretim] = useState('');
   const [makineFlags, setMakineFlags] = useState(initialMakineFlags);
 
   const toggleMakine = (key) => {
@@ -144,6 +148,61 @@ const UrunEkle = ({ isDark, onBack }) => {
             isDark={isDark}
             className="w-full"
           />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${textSub}`}>Brüt ağırlık (kg)</label>
+            <NumberStepperInput
+              value={brutAgirlik}
+              onChange={(e) => setBrutAgirlik(e.target.value)}
+              min={0}
+              step={0.1}
+              placeholder="Örn: 6"
+              isDark={isDark}
+              className="w-full"
+            />
+          </div>
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${textSub}`}>Net ağırlık (kg)</label>
+            <NumberStepperInput
+              value={netAgirlik}
+              onChange={(e) => setNetAgirlik(e.target.value)}
+              min={0}
+              step={0.1}
+              placeholder="Örn: 5.7"
+              isDark={isDark}
+              className="w-full"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${textSub}`}>Hurda oranı (%)</label>
+            <NumberStepperInput
+              value={hurdaOrani}
+              onChange={(e) => setHurdaOrani(e.target.value)}
+              min={0}
+              max={100}
+              step={0.1}
+              placeholder="Örn: 5"
+              isDark={isDark}
+              className="w-full"
+            />
+          </div>
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${textSub}`}>Günlük üretim</label>
+            <NumberStepperInput
+              value={gunlukUretim}
+              onChange={(e) => setGunlukUretim(e.target.value)}
+              min={0}
+              step={1}
+              placeholder="Örn: 120"
+              isDark={isDark}
+              className="w-full"
+            />
+          </div>
         </div>
 
         <div>

@@ -67,12 +67,28 @@ const PersonelBilgi = ({ isDark, person, onBack }) => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <div className={`text-xs font-medium uppercase tracking-wider ${textSub}`}>Maaş (₺)</div>
+            <div className={`text-xs font-medium uppercase tracking-wider ${textSub}`}>İşe giriş tarihi</div>
+            <div className={`font-medium ${textTitle}`}>{person.iseGirisTarihi ?? '—'}</div>
+          </div>
+          <div>
+            <div className={`text-xs font-medium uppercase tracking-wider ${textSub}`}>Kıdem (yıl)</div>
+            <div className={`font-medium ${textTitle}`}>{person.kidem != null ? Number(person.kidem).toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '—'}</div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <div className={`text-xs font-medium uppercase tracking-wider ${textSub}`}>Brüt maaş (₺/ay)</div>
             <div className={`font-medium ${textTitle}`}>{person.maas != null ? person.maas.toLocaleString('tr-TR') : '—'}</div>
           </div>
           <div>
-            <div className={`text-xs font-medium uppercase tracking-wider ${textSub}`}>İşe giriş tarihi</div>
-            <div className={`font-medium ${textTitle}`}>{person.iseGirisTarihi ?? '—'}</div>
+            <div className={`text-xs font-medium uppercase tracking-wider ${textSub}`}>Yol ücreti (₺/ay)</div>
+            <div className={`font-medium ${textTitle}`}>{person.yol != null ? person.yol.toLocaleString('tr-TR') : '—'}</div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <div className={`text-xs font-medium uppercase tracking-wider ${textSub}`}>Yemek (₺/ay)</div>
+            <div className={`font-medium ${textTitle}`}>{person.yemek != null ? person.yemek.toLocaleString('tr-TR') : '—'}</div>
           </div>
         </div>
         <div>

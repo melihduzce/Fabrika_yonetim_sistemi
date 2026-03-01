@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Activity, Box, ShoppingCart, Users, Moon, Sun } from 'lucide-react';
+import { Home, Activity, Box, ShoppingCart, Users, Moon, Sun, Calculator } from 'lucide-react';
 import { PAGE_TITLES } from 'constants/navigation';
 
 const TAB_ICONS = {
@@ -7,6 +7,7 @@ const TAB_ICONS = {
   uretim: Activity,
   'makine-ekle': Activity,
   'siparis-olustur': ShoppingCart,
+  muhasebe: Calculator,
   stok: Box,
   'urun-ekle': Box,
   personel: Users,

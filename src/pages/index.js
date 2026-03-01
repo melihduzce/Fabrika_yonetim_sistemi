@@ -7,4 +7,5 @@ export { default as Personel } from './Personel';
 export { default as PersonelBilgi } from './PersonelBilgi';
 export { default as PersonelEkle } from './PersonelEkle';
 export { default as SiparisOlustur } from './SiparisOlustur';
+export { default as Muhasebe } from './Muhasebe';
 export { default as PlaceholderPage } from './PlaceholderPage';

@@ -16,6 +16,9 @@ const PersonelEkle = ({ isDark, personelList = [], setPersonelList, onBack }) =>
   const [telefon, setTelefon] = useState('');
   const [department, setDepartment] = useState('');
   const [pozisyon, setPozisyon] = useState('');
+  const [brutMaas, setBrutMaas] = useState('');
+  const [yol, setYol] = useState('');
+  const [yemek, setYemek] = useState('');
   const [iseGirisTarihi, setIseGirisTarihi] = useState('');
   const [egitimSertifikalariText, setEgitimSertifikalariText] = useState(''); // satır veya virgülle ayrılmış
 
@@ -37,7 +40,9 @@ const PersonelEkle = ({ isDark, personelList = [], setPersonelList, onBack }) =>
       telefon: telefon.trim() || null,
       department,
       pozisyon: pozisyon.trim() || null,
-      maas: null,
+      maas: brutMaas !== '' ? parseFloat(brutMaas) : null,
+      yol: yol !== '' ? parseFloat(yol) : null,
+      yemek: yemek !== '' ? parseFloat(yemek) : null,
       iseGirisTarihi: iseGirisTarihi.trim() || null,
       yillikIzinHakki: 14,
       kullanilanIzin: 0,
@@ -51,6 +56,9 @@ const PersonelEkle = ({ isDark, personelList = [], setPersonelList, onBack }) =>
     setTelefon('');
     setDepartment('');
     setPozisyon('');
+    setBrutMaas('');
+    setYol('');
+    setYemek('');
     setIseGirisTarihi('');
     setEgitimSertifikalariText('');
   };
@@ -177,6 +185,39 @@ const PersonelEkle = ({ isDark, personelList = [], setPersonelList, onBack }) =>
                   renderLabel={(p) => p.ad}
                   placeholder={department ? 'Pozisyon seçin' : 'Önce departman seçin'}
                   isDark={isDark}
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${textSub}`}>Brüt maaş (₺/ay)</label>
+                <input
+                  type="number"
+                  value={brutMaas}
+                  onChange={(e) => setBrutMaas(e.target.value)}
+                  placeholder="Örn: 18500"
+                  min="0"
+                  className={inputCls(isDark)}
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${textSub}`}>Yol ücreti (₺/ay)</label>
+                <input
+                  type="number"
+                  value={yol}
+                  onChange={(e) => setYol(e.target.value)}
+                  placeholder="Örn: 450"
+                  min="0"
+                  className={inputCls(isDark)}
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${textSub}`}>Yemek (₺/ay)</label>
+                <input
+                  type="number"
+                  value={yemek}
+                  onChange={(e) => setYemek(e.target.value)}
+                  placeholder="Örn: 600"
+                  min="0"
+                  className={inputCls(isDark)}
                 />
               </div>
               <div>

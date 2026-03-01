@@ -4,9 +4,9 @@ import { DepoBarChart } from 'charts';
 import { getThemeClasses } from 'utils/theme';
 
 const STOK_TABLOSU = [
-  { kod: 'STK-001', ad: 'Çelik Levha (5mm)', miktar: '450 Adet', miktarSayi: 450, kapasite: 800, kritik: 500, birimMaliyet: 72, birimFiyat: 85, durum: 'kritik' },
-  { kod: 'STK-002', ad: 'Plastik Granül', miktar: '2500 kg', miktarSayi: 2500, kapasite: 4000, kritik: 1000, birimMaliyet: 9.5, birimFiyat: 12, durum: 'yeterli' },
-  { kod: 'STK-003', ad: 'Endüstriyel Boya', miktar: '600 Lt', miktarSayi: 600, kapasite: 1000, kritik: 50, birimMaliyet: 38, birimFiyat: 45, durum: 'yeterli' },
+  { kod: 'STK-001', ad: 'Çelik Levha (5mm)', miktar: '450 Adet', miktarSayi: 450, kapasite: 800, kritik: 500, birimMaliyet: 72, birimFiyat: 85, durum: 'kritik', brutAgirlik: 6, netAgirlik: 5.7, hurdaOrani: 5, gunlukUretim: 120 },
+  { kod: 'STK-002', ad: 'Plastik Granül', miktar: '2500 kg', miktarSayi: 2500, kapasite: 4000, kritik: 1000, birimMaliyet: 9.5, birimFiyat: 12, durum: 'yeterli', brutAgirlik: 25, netAgirlik: 24, hurdaOrani: 4, gunlukUretim: 800 },
+  { kod: 'STK-003', ad: 'Endüstriyel Boya', miktar: '600 Lt', miktarSayi: 600, kapasite: 1000, kritik: 50, birimMaliyet: 38, birimFiyat: 45, durum: 'yeterli', brutAgirlik: 20, netAgirlik: 19.5, hurdaOrani: 2.5, gunlukUretim: 50 },
 ];
 
 const Stok = ({ isDark, onUrunEkle }) => {
@@ -52,9 +52,12 @@ const Stok = ({ isDark, onUrunEkle }) => {
               <tr>
                 <th className="py-4 px-6 rounded-l-lg">Ürün Kodu</th>
                 <th className="py-4 px-6">Ürün Adı</th>
-                <th className="py-4 px-6">Miktar</th>
+                <th className="py-4 px-6">Brüt Ağırlık</th>
+                <th className="py-4 px-6">Net Ağırlık</th>
+                <th className="py-4 px-6">Hurda Oranı</th>
                 <th className="py-4 px-6">Kapasite</th>
                 <th className="py-4 px-6">Kritik Seviye</th>
+                <th className="py-4 px-6">Miktar</th>
                 <th className="py-4 px-6">Maliyet</th>
                 <th className="py-4 px-6">Fiyat</th>
                 <th className="py-4 px-6 rounded-r-lg">Durum</th>
@@ -78,11 +81,13 @@ const Stok = ({ isDark, onUrunEkle }) => {
                   >
                     <td className={`py-4 px-6 font-mono ${textSub}`}>{row.kod}</td>
                     <td className={`py-4 px-6 font-medium ${textTitle}`}>{row.ad}</td>
-                    <td className={`py-4 px-6 font-bold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{row.miktar}</td>
+                    <td className={`py-4 px-6 ${textSub}`}>{row.brutAgirlik != null ? `${row.brutAgirlik} kg` : '—'}</td>
+                    <td className={`py-4 px-6 ${textSub}`}>{row.netAgirlik != null ? `${row.netAgirlik} kg` : '—'}</td>
+                    <td className={`py-4 px-6 ${textSub}`}>{row.hurdaOrani != null ? `%${row.hurdaOrani}` : '—'}</td>
                     <td className="py-4 px-6">
-                      <div className="flex items-center gap-2 min-w-[120px]">
+                      <div className="flex items-center gap-1.5 min-w-0 w-[88px] max-w-[88px]">
                         <div
-                          className={`flex-1 h-2 rounded-full overflow-hidden transition-all duration-500 ${
+                          className={`flex-1 min-w-0 h-2 rounded-full overflow-hidden transition-all duration-500 ${
                             isDark ? 'bg-gray-700' : 'bg-gray-200'
                           }`}
                         >
@@ -95,13 +100,14 @@ const Stok = ({ isDark, onUrunEkle }) => {
                       </div>
                     </td>
                     <td className={`py-4 px-6 ${textSub}`}>{row.kritik}</td>
+                    <td className={`py-4 px-6 font-bold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{row.miktar}</td>
                     <td className={`py-4 px-6 ${textSub}`}>
-                      <span className="font-medium">{toplamMaliyet} ₺</span>
-                      <span className={`block text-xs ${textSub}`}>{row.birimMaliyet} ₺/br</span>
+                      <span className="font-medium whitespace-nowrap">{toplamMaliyet} ₺</span>
+                      <span className={`block text-xs ${textSub} whitespace-nowrap`}>{row.birimMaliyet} ₺/br</span>
                     </td>
                     <td className={`py-4 px-6 ${textSub}`}>
-                      <span className="font-semibold text-green-600 dark:text-green-400">{toplamFiyat} ₺</span>
-                      <span className={`block text-xs ${textSub}`}>{row.birimFiyat} ₺/br</span>
+                      <span className="font-semibold text-green-600 dark:text-green-400 whitespace-nowrap">{toplamFiyat} ₺</span>
+                      <span className={`block text-xs ${textSub} whitespace-nowrap`}>{row.birimFiyat} ₺/br</span>
                     </td>
                     <td className="py-4 px-6">
                       <span className={`text-xs font-bold px-3 py-1 rounded-full border flex w-max items-center gap-1 ${durumBadgeCls}`}>
