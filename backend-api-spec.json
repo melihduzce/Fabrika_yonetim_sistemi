@@ -1,18 +1,30 @@
 {
   "meta": {
-    "proje": "Fabrika Yönetim (Fabrika YS)",
-    "versiyon": "1.0",
-    "aciklama": "Frontend ile uyumlu API veri yapıları ve örnek veriler. Backend ekibi için referans."
+    "proje": "Fabrika Yönetim Sistemi (Fabrika YS)",
+    "versiyon": "2.0",
+    "aciklama": "Frontend ile birebir uyumlu API spesifikasyonu. Backend ekibinin endpoint, şema ve örnek verileri tek dosyadan takip etmesi için hazırlanmıştır.",
+    "tarih_formatı": "DD.MM.YYYY (örn: 25.02.2025)",
+    "para_birimi": "TRY (₺), ondalık ayırıcı virgül (tr-TR)",
+    "varsayilan_base_url": "https://api.example.com/v1"
   },
+
+  "genel_notlar": {
+    "kimlik_dogrulama": "Login sonrası dönen token, isteklerde Header: Authorization: Bearer <token> ile gönderilir.",
+    "hata_cevabi": "4xx/5xx durumlarında { \"error\": \"string\", \"code\": \"string (opsiyonel)\" } önerilir.",
+    "sayfalama": "Liste endpoint'lerinde ?page=1&limit=20 gibi parametreler opsiyonel eklenebilir."
+  },
+
   "auth": {
     "login": {
-      "request": {
+      "method": "POST",
+      "endpoint": "/auth/login",
+      "request_body": {
         "email": "string (zorunlu)",
         "password": "string (zorunlu)",
-        "rememberMe": "boolean (opsiyonel)"
+        "rememberMe": "boolean (opsiyonel, varsayılan false)"
       },
-      "response_ornek": {
-        "token": "string",
+      "response_200_ornek": {
+        "token": "string (JWT veya session token)",
         "user": {
           "id": "string",
           "email": "string",
@@ -21,35 +33,22 @@
       }
     },
     "register": {
-      "request": {
-        "email": "string",
-        "password": "string",
+      "method": "POST",
+      "endpoint": "/auth/register",
+      "request_body": {
+        "email": "string (zorunlu)",
+        "password": "string (zorunlu)",
         "displayName": "string (opsiyonel)"
+      },
+      "response_200_ornek": {
+        "token": "string",
+        "user": { "id": "string", "email": "string", "displayName": "string" }
       }
     }
   },
-  "personel": {
-    "aciklama": "Personel listesi, detay, ekleme ve listeden çıkarma.",
-    "liste_response": "GET /api/personel",
-    "tekil_response": "GET /api/personel/:id",
-    "ekle_request": "POST /api/personel",
-    "sil_request": "DELETE /api/personel/:id",
-    "schema": {
-      "id": "number (benzersiz)",
-      "firstName": "string",
-      "lastName": "string",
-      "tcKimlikNo": "string | null (11 hane)",
-      "telefon": "string | null",
-      "department": "string",
-      "pozisyon": "string | null",
-      "maas": "number | null (TRY)",
-      "iseGirisTarihi": "string | null (örn: 15.03.2022)",
-      "yillikIzinHakki": "number (varsayılan 14)",
-      "kullanilanIzin": "number (varsayılan 0)",
-      "fazlaMesaiSaat": "number (varsayılan 0)",
-      "egitimSertifikalari": "string[]"
-    },
-    "departman_degerleri": ["Üretim", "Lojistik", "Bakım", "Kalite", "İdari", "Diğer"],
+
+  "referans_degerler": {
+    "departman_listesi": ["Üretim", "Lojistik", "Bakım", "Kalite", "İdari", "Diğer"],
     "pozisyon_departmana_gore": {
       "Üretim": ["Üretim Operatörü", "Üretim Şefi", "Hat Sorumlusu", "Kaynak Operatörü"],
       "Lojistik": ["Depo Sorumlusu", "Forklift Operatörü", "Sevkiyat Sorumlusu", "Stok Kontrol"],
@@ -57,6 +56,51 @@
       "Kalite": ["Kalite Kontrol Uzmanı", "Kalite Şefi", "Laborant"],
       "İdari": ["İnsan Kaynakları Uzmanı", "Muhasebe", "İdari İşler Sorumlusu"],
       "Diğer": ["Genel İşçi", "Stajyer", "Diğer"]
+    },
+    "siparis_durumlari": ["Beklemede", "Onaylandı", "Üretimde", "Sevk Edildi"],
+    "stok_durum": ["kritik", "yeterli"],
+    "muhasebe_sabit_gider_kalemleri": ["Elektrik", "İşçilik", "SGK", "Yol", "Yemek", "Bakım", "Nakliye", "Kira"],
+    "muhasebe_degisken_gider_kalemleri": ["Hammadde alımı", "Hurda kaybı"]
+  },
+
+  "personel": {
+    "aciklama": "Personel listesi, detay, ekleme ve listeden çıkarma. Frontend: Personel, Personel Bilgi, Personel Ekle sayfaları.",
+    "endpoints": {
+      "liste": { "method": "GET", "path": "/api/personel" },
+      "tekil": { "method": "GET", "path": "/api/personel/:id" },
+      "ekle": { "method": "POST", "path": "/api/personel" },
+      "sil": { "method": "DELETE", "path": "/api/personel/:id" }
+    },
+    "schema": {
+      "id": "number (benzersiz, otomatik)",
+      "firstName": "string (zorunlu)",
+      "lastName": "string (zorunlu)",
+      "tcKimlikNo": "string | null (11 hane rakam)",
+      "telefon": "string | null",
+      "department": "string (referans_degerler.departman_listesi)",
+      "pozisyon": "string | null (referans_degerler.pozisyon_departmana_gore)",
+      "kidem": "number | null (yıl, ondalıklı örn: 2.8)",
+      "maas": "number | null (brüt aylık TRY)",
+      "yol": "number | null (aylık yol ücreti TRY)",
+      "yemek": "number | null (aylık yemek ücreti TRY)",
+      "iseGirisTarihi": "string | null (DD.MM.YYYY)",
+      "yillikIzinHakki": "number (varsayılan 14)",
+      "kullanilanIzin": "number (varsayılan 0)",
+      "fazlaMesaiSaat": "number (varsayılan 0)",
+      "egitimSertifikalari": "string[] (sertifika adları)"
+    },
+    "ekle_request_body": {
+      "firstName": "string (zorunlu)",
+      "lastName": "string (zorunlu)",
+      "tcKimlikNo": "string | null",
+      "telefon": "string | null",
+      "department": "string (zorunlu)",
+      "pozisyon": "string | null",
+      "maas": "number | null",
+      "yol": "number | null",
+      "yemek": "number | null",
+      "iseGirisTarihi": "string | null",
+      "egitimSertifikalari": "string[]"
     },
     "ornek_liste": [
       {
@@ -67,7 +111,10 @@
         "telefon": "0532 111 2233",
         "department": "Üretim",
         "pozisyon": "Üretim Operatörü",
+        "kidem": 2.8,
         "maas": 18500,
+        "yol": 450,
+        "yemek": 600,
         "iseGirisTarihi": "15.03.2022",
         "yillikIzinHakki": 14,
         "kullanilanIzin": 5,
@@ -82,35 +129,26 @@
         "telefon": "0533 444 5566",
         "department": "Lojistik",
         "pozisyon": "Depo Sorumlusu",
+        "kidem": 1.7,
         "maas": 16200,
+        "yol": 350,
+        "yemek": 600,
         "iseGirisTarihi": "01.06.2023",
         "yillikIzinHakki": 14,
         "kullanilanIzin": 0,
         "fazlaMesaiSaat": 8,
         "egitimSertifikalari": ["Forklift Sürücü", "İSG Temel"]
-      },
-      {
-        "id": 3,
-        "firstName": "Mehmet",
-        "lastName": "Demir",
-        "tcKimlikNo": "45678901234",
-        "telefon": "0542 777 8899",
-        "department": "Bakım",
-        "pozisyon": "Bakım Teknisyeni",
-        "maas": 19800,
-        "iseGirisTarihi": "10.09.2021",
-        "yillikIzinHakki": 14,
-        "kullanilanIzin": 14,
-        "fazlaMesaiSaat": 24,
-        "egitimSertifikalari": ["Elektrik Tesisat", "Hidrolik Pnömatik", "İSG Temel"]
       }
     ]
   },
+
   "musteri": {
-    "aciklama": "Sipariş oluştururken seçilen müşteri listesi.",
-    "liste_response": "GET /api/musteriler",
+    "aciklama": "Sipariş oluşturma ve Muhasebe sayfalarında kullanılan müşteri listesi.",
+    "endpoints": {
+      "liste": { "method": "GET", "path": "/api/musteriler" }
+    },
     "schema": {
-      "id": "string (örn: M1)",
+      "id": "string (örn: M1, benzersiz)",
       "unvan": "string",
       "yetkili": "string",
       "tel": "string"
@@ -122,10 +160,13 @@
       { "id": "M4", "unvan": "Omega Makine Ltd.", "yetkili": "Zeynep Öz", "tel": "0232 555 0404" }
     ]
   },
+
   "urun": {
-    "aciklama": "Sipariş ve stokta kullanılan ürünler. birimSure: saat/birim, gunlukUretim: birim/gün.",
-    "liste_response": "GET /api/urunler",
-    "ekle_request": "POST /api/urunler",
+    "aciklama": "Sipariş oluşturma, Stok ve Ürün Ekle sayfalarında kullanılır. birimSure: saat/birim, gunlukUretim: birim/gün.",
+    "endpoints": {
+      "liste": { "method": "GET", "path": "/api/urunler" },
+      "ekle": { "method": "POST", "path": "/api/urunler" }
+    },
     "schema": {
       "id": "string (örn: UR-001)",
       "ad": "string",
@@ -135,41 +176,49 @@
       "birimSure": "number (saat/birim)",
       "gunlukUretim": "number (birim/gün)"
     },
+    "urun_ekle_form_ek_alani": {
+      "urunKodu": "string (frontend'de id ile eşleşebilir)",
+      "urunAdi": "string (opsiyonel)",
+      "hammaddeTuru": "string (örn: Çelik, Sac)",
+      "birimUretimSuresi": "number",
+      "birimSureBirim": "string: 'saat' | 'dakika'",
+      "beklenenHurdaMiktar": "number | string",
+      "brutAgirlik": "number | null (kg)",
+      "netAgirlik": "number | null (kg)",
+      "hurdaOrani": "number | null (yüzde 0-100)",
+      "gunlukUretim": "number | null (birim/gün)",
+      "makineFlags": "object (1000_ton, 800_ton, 400_ton, 250_ton, eksantrik_125, eksantrik_80, induksiyon, hidrolik_kivirma; her biri boolean)"
+    },
     "ornek_liste": [
       { "id": "UR-001", "ad": "Çelik Levha (5mm)", "birim": "Adet", "birimFiyat": 85, "birimMaliyet": 72, "birimSure": 0.5, "gunlukUretim": 50 },
       { "id": "UR-002", "ad": "Plastik Granül PP", "birim": "kg", "birimFiyat": 12, "birimMaliyet": 9.5, "birimSure": 0.02, "gunlukUretim": 2000 },
       { "id": "UR-003", "ad": "Endüstriyel Boya", "birim": "Lt", "birimFiyat": 45, "birimMaliyet": 38, "birimSure": 0.05, "gunlukUretim": 500 },
       { "id": "UR-004", "ad": "Kauçuk Conta", "birim": "Adet", "birimFiyat": 8, "birimMaliyet": 6, "birimSure": 0.01, "gunlukUretim": 5000 },
       { "id": "UR-005", "ad": "Paslanmaz Vida M8", "birim": "Adet", "birimFiyat": 2.5, "birimMaliyet": 1.8, "birimSure": 0.005, "gunlukUretim": 15000 }
-    ],
-    "urun_ekle_form_ek_alani": {
-      "urunKodu": "string",
-      "urunAdi": "string",
-      "hammaddeTuru": "string",
-      "birimUretimSuresi": "number",
-      "birimSureBirim": "saat | dakika",
-      "beklenenHurdaMiktar": "string/number",
-      "makineFlags": "object (1000_ton, 800_ton, ... boolean)"
-    }
+    ]
   },
+
   "siparis": {
-    "aciklama": "Sipariş listesi ve yeni sipariş oluşturma.",
-    "liste_response": "GET /api/siparisler",
-    "ekle_request": "POST /api/siparisler",
+    "aciklama": "Sipariş listesi ve yeni sipariş oluşturma. Muhasebe sayfasındaki 'Müşterilere yapılan satışlar' bu veriden aylık/müşteri bazlı türetilir.",
+    "endpoints": {
+      "liste": { "method": "GET", "path": "/api/siparisler" },
+      "ekle": { "method": "POST", "path": "/api/siparisler" }
+    },
     "durum_degerleri": ["Beklemede", "Onaylandı", "Üretimde", "Sevk Edildi"],
+    "kapasite_notu": "Açık siparişler (Beklemede, Onaylandı, Üretimde) toplam üretim süresi aylık kapasite (örn. 200 saat) ile karşılaştırılır.",
     "schema": {
-      "no": "string (örn: SIP-2025-001)",
-      "musteriId": "string",
-      "urunId": "string",
+      "no": "string (örn: SIP-2025-001, benzersiz)",
+      "musteriId": "string (musteri.id)",
+      "urunId": "string (urun.id)",
       "miktar": "number",
-      "birimFiyat": "number (TRY)",
-      "tarih": "string (örn: 25.02.2025)",
-      "durum": "string"
+      "birimFiyat": "number (TRY, ürünün o anki birim fiyatı)",
+      "tarih": "string (DD.MM.YYYY)",
+      "durum": "string (durum_degerleri)"
     },
     "ekle_request_body": {
-      "musteriId": "string",
-      "urunId": "string",
-      "miktar": "number"
+      "musteriId": "string (zorunlu)",
+      "urunId": "string (zorunlu)",
+      "miktar": "number (zorunlu)"
     },
     "ornek_liste": [
       { "no": "SIP-2025-001", "musteriId": "M1", "urunId": "UR-001", "miktar": 120, "birimFiyat": 85, "tarih": "25.02.2025", "durum": "Onaylandı" },
@@ -177,44 +226,77 @@
       { "no": "SIP-2025-003", "musteriId": "M3", "urunId": "UR-003", "miktar": 80, "birimFiyat": 45, "tarih": "23.02.2025", "durum": "Sevk Edildi" },
       { "no": "SIP-2025-004", "musteriId": "M1", "urunId": "UR-004", "miktar": 2000, "birimFiyat": 8, "tarih": "26.02.2025", "durum": "Beklemede" },
       { "no": "SIP-2025-005", "musteriId": "M4", "urunId": "UR-005", "miktar": 5000, "birimFiyat": 2.5, "tarih": "26.02.2025", "durum": "Onaylandı" }
-    ],
-    "kapasite": {
-      "aylik_kapasite_saat": 200,
-      "acik_durumlar": ["Beklemede", "Onaylandı", "Üretimde"]
-    }
-  },
-  "stok": {
-    "aciklama": "Depo stok durumu. miktar: görüntü için metin, miktarSayi: hesaplama için sayı.",
-    "liste_response": "GET /api/stok",
-    "schema": {
-      "kod": "string (örn: STK-001)",
-      "ad": "string",
-      "miktar": "string (örn: 450 Adet)",
-      "miktarSayi": "number",
-      "kapasite": "number",
-      "kritik": "number (kritik seviye)",
-      "birimMaliyet": "number (TRY)",
-      "birimFiyat": "number (TRY)",
-      "durum": "kritik | yeterli"
-    },
-    "ornek_liste": [
-      { "kod": "STK-001", "ad": "Çelik Levha (5mm)", "miktar": "450 Adet", "miktarSayi": 450, "kapasite": 800, "kritik": 500, "birimMaliyet": 72, "birimFiyat": 85, "durum": "kritik" },
-      { "kod": "STK-002", "ad": "Plastik Granül", "miktar": "2500 kg", "miktarSayi": 2500, "kapasite": 4000, "kritik": 1000, "birimMaliyet": 9.5, "birimFiyat": 12, "durum": "yeterli" },
-      { "kod": "STK-003", "ad": "Endüstriyel Boya", "miktar": "600 Lt", "miktarSayi": 600, "kapasite": 1000, "kritik": 50, "birimMaliyet": 38, "birimFiyat": 45, "durum": "yeterli" }
     ]
   },
-  "makine": {
-    "aciklama": "Üretim hattı makine listesi.",
-    "liste_response": "GET /api/makineler",
-    "ekle_request": "POST /api/makineler",
+
+  "stok": {
+    "aciklama": "Depo stok durumu. miktar: ekranda gösterim (örn: '450 Adet'), miktarSayi: hesaplama ve doluluk yüzdesi için. Tabloda Kritik Seviye solda, Miktar sağda yan yana.",
+    "endpoints": {
+      "liste": { "method": "GET", "path": "/api/stok" }
+    },
     "schema": {
-      "id": "number veya string (benzersiz)",
+      "kod": "string (örn: STK-001, benzersiz)",
       "ad": "string",
-      "detay": "string (opsiyonel, örn: Sıcaklık: 85°C)"
+      "miktar": "string (görüntü, örn: '450 Adet', '2500 kg')",
+      "miktarSayi": "number (hesaplama için)",
+      "kapasite": "number",
+      "kritik": "number (kritik seviye eşiği)",
+      "birimMaliyet": "number (TRY)",
+      "birimFiyat": "number (TRY)",
+      "durum": "string: 'kritik' | 'yeterli' (miktarSayi <= kritik ise kritik)",
+      "brutAgirlik": "number | null (kg)",
+      "netAgirlik": "number | null (kg)",
+      "hurdaOrani": "number | null (yüzde)",
+      "gunlukUretim": "number | null (tabloda gösterilmiyor, sadece veri; opsiyonel)"
+    },
+    "ornek_liste": [
+      {
+        "kod": "STK-001",
+        "ad": "Çelik Levha (5mm)",
+        "miktar": "450 Adet",
+        "miktarSayi": 450,
+        "kapasite": 800,
+        "kritik": 500,
+        "birimMaliyet": 72,
+        "birimFiyat": 85,
+        "durum": "kritik",
+        "brutAgirlik": 6,
+        "netAgirlik": 5.7,
+        "hurdaOrani": 5,
+        "gunlukUretim": 120
+      },
+      {
+        "kod": "STK-002",
+        "ad": "Plastik Granül",
+        "miktar": "2500 kg",
+        "miktarSayi": 2500,
+        "kapasite": 4000,
+        "kritik": 1000,
+        "birimMaliyet": 9.5,
+        "birimFiyat": 12,
+        "durum": "yeterli",
+        "brutAgirlik": 25,
+        "netAgirlik": 24,
+        "hurdaOrani": 4,
+        "gunlukUretim": 800
+      }
+    ]
+  },
+
+  "makine": {
+    "aciklama": "Üretim hattı makine listesi. Makine Ekle sayfasından eklenir.",
+    "endpoints": {
+      "liste": { "method": "GET", "path": "/api/makineler" },
+      "ekle": { "method": "POST", "path": "/api/makineler" }
+    },
+    "schema": {
+      "id": "number | string (benzersiz)",
+      "ad": "string",
+      "detay": "string | null (örn: Sıcaklık: 85°C)"
     },
     "ekle_request_body": {
-      "ad": "string",
-      "id": "string (örn: 1001 veya MK-001)",
+      "ad": "string (zorunlu)",
+      "id": "string (opsiyonel, örn: 1001 veya MK-001)",
       "detay": "string (opsiyonel)"
     },
     "ornek_liste": [
@@ -223,25 +305,86 @@
       { "id": 3, "ad": "Paketleme - B2", "detay": "Sıcaklık: 62°C" }
     ]
   },
-  "grafik_ve_dashboard": {
-    "uretim_grafik": {
-      "endpoint_onerisi": "GET /api/dashboard/uretim-grafik",
-      "ornek": [
-        { "saat": "08:00", "uretim": 3200, "hedef": 2500 },
-        { "saat": "10:00", "uretim": 4100, "hedef": 2500 },
-        { "saat": "12:00", "uretim": 2800, "hedef": 2500 },
-        { "saat": "14:00", "uretim": 4500, "hedef": 2500 },
-        { "saat": "16:00", "uretim": 3900, "hedef": 2500 },
-        { "saat": "18:00", "uretim": 3100, "hedef": 2500 }
-      ]
+
+  "muhasebe": {
+    "aciklama": "Muhasebe sayfası: Giderler (sabit + değişken) ve Gelirler (müşteri satışları + tahmini). Net kar = ortalama gelir - toplam gider. Frontend aylık satışları sipariş verisinden tarih ile gruplar.",
+    "endpoints": {
+      "giderler_sabit": { "method": "GET", "path": "/api/muhasebe/giderler/sabit", "aciklama": "Aylık sabit gider kalemleri ve tutarları" },
+      "giderler_degisken": { "method": "GET", "path": "/api/muhasebe/giderler/degisken", "aciklama": "Aylık değişken gider kalemleri (üretim maliyetleri)" },
+      "gelirler_satislar": { "method": "GET", "path": "/api/muhasebe/gelirler/satislar", "aciklama": "Müşteri satışları (siparişlerden türetilebilir veya ayrı kayıt); aylık/müşteri bazlı" },
+      "tahmini": { "method": "GET", "path": "/api/muhasebe/tahmini", "aciklama": "Beklenen üretim ve tahmini gelir" }
     },
-    "depo_doluluk": {
-      "endpoint_onerisi": "GET /api/dashboard/depo-doluluk",
-      "ornek": [
-        { "malzeme": "Çelik", "miktar": 450, "renk": "#3b82f6" },
-        { "malzeme": "Plastik", "miktar": 2500, "renk": "#a855f7" },
-        { "malzeme": "Boya", "miktar": 600, "renk": "#22c55e" }
-      ]
-    }
+    "sabit_gider_schema": {
+      "kalem": "string (Elektrik, İşçilik, SGK, Yol, Yemek, Bakım, Nakliye, Kira)",
+      "tutar": "number (TRY/ay)"
+    },
+    "degisken_gider_schema": {
+      "kalem": "string (Hammadde alımı, Hurda kaybı)",
+      "tutar": "number (TRY/ay)"
+    },
+    "ornek_sabit_giderler": [
+      { "kalem": "Elektrik", "tutar": 18500 },
+      { "kalem": "İşçilik", "tutar": 125000 },
+      { "kalem": "SGK", "tutar": 32000 },
+      { "kalem": "Yol", "tutar": 8400 },
+      { "kalem": "Yemek", "tutar": 15600 },
+      { "kalem": "Bakım", "tutar": 12000 },
+      { "kalem": "Nakliye", "tutar": 22000 },
+      { "kalem": "Kira", "tutar": 45000 }
+    ],
+    "ornek_degisken_giderler": [
+      { "kalem": "Hammadde alımı", "tutar": 285000 },
+      { "kalem": "Hurda kaybı", "tutar": 14200 }
+    ],
+    "tahmini_schema": {
+      "beklenenUretim": "string (örn: '28.500 birim')",
+      "tahminiGelir": "number (TRY)",
+      "aciklama": "string"
+    },
+    "ornek_tahmini": {
+      "beklenenUretim": "28.500 birim",
+      "tahminiGelir": 445000,
+      "aciklama": "Beklenen aylık üretime göre tahmini satış geliri"
+    },
+    "ai_analiz_notu": "Sayfada 'AI Analiz' butonu ile açılan panel ileride backend'den metin/özet alacak; opsiyonel endpoint: POST /api/muhasebe/ai-analiz veya GET /api/muhasebe/ai-ozet"
+  },
+
+  "dashboard": {
+    "aciklama": "Ana panel: özet kartlar, canlı üretim grafiği, depo doluluk, AI uyarıları, aksiyon önerileri, geçmiş analizler.",
+    "endpoints": {
+      "uretim_grafik": { "method": "GET", "path": "/api/dashboard/uretim-grafik" },
+      "depo_doluluk": { "method": "GET", "path": "/api/dashboard/depo-doluluk" },
+      "ai_uyarilari": { "method": "GET", "path": "/api/dashboard/ai-uyarilari", "opsiyonel": true },
+      "risk_seviyesi": { "method": "GET", "path": "/api/dashboard/risk-seviyesi", "opsiyonel": true },
+      "aksiyon_onerileri": { "method": "GET", "path": "/api/dashboard/aksiyon-onerileri", "opsiyonel": true },
+      "gecmis_analizler": { "method": "GET", "path": "/api/dashboard/gecmis-analizler", "opsiyonel": true }
+    },
+    "uretim_grafik_schema": {
+      "saat": "string (HH:mm)",
+      "uretim": "number",
+      "hedef": "number"
+    },
+    "ornek_uretim_grafik": [
+      { "saat": "08:00", "uretim": 3200, "hedef": 2500 },
+      { "saat": "10:00", "uretim": 4100, "hedef": 2500 },
+      { "saat": "12:00", "uretim": 2800, "hedef": 2500 },
+      { "saat": "14:00", "uretim": 4500, "hedef": 2500 },
+      { "saat": "16:00", "uretim": 3900, "hedef": 2500 },
+      { "saat": "18:00", "uretim": 3100, "hedef": 2500 }
+    ],
+    "depo_doluluk_schema": {
+      "malzeme": "string",
+      "miktar": "number",
+      "renk": "string (hex, örn: #3b82f6)"
+    },
+    "ornek_depo_doluluk": [
+      { "malzeme": "Çelik", "miktar": 450, "renk": "#3b82f6" },
+      { "malzeme": "Plastik", "miktar": 2500, "renk": "#a855f7" },
+      { "malzeme": "Boya", "miktar": 600, "renk": "#22c55e" }
+    ],
+    "ai_uyarilari_ornek": ["Çelik levha stok seviyesi kritik bölgeye yaklaşıyor.", "Üretim hattı 3 için planlı bakım önerilir."],
+    "risk_seviyesi_degerleri": ["düşük", "orta", "yüksek"],
+    "aksiyon_onerileri_ornek": ["Stok Depo'dan çelik levha siparişi verin.", "Bakım planı oluşturun.", "Enerji tüketimini gözden geçirin."],
+    "gecmis_analizler_schema": { "tarih": "string", "mesaj": "string" }
   }
 }
