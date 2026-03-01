@@ -1,0 +1,128 @@
+/* Fabrika YS - Uygulama genel stilleri (gerekirse kullanılır) */
+
+.App {
+  text-align: center;
+}
+
+/* Yükleme ekranı - 3D animasyon */
+@keyframes spin3d {
+  to {
+    transform: rotateY(360deg) rotateZ(15deg);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.02);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.4));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 35px rgba(59, 130, 246, 0.7));
+  }
+}
+
+.loading-screen-bg {
+  background: linear-gradient(145deg, #0f172a 0%, #1e293b 40%, #0f172a 100%);
+}
+
+.loading-glass {
+  background: rgba(30, 41, 59, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.loading-ring-3d {
+  animation: spin3d 2s linear infinite;
+  transform-style: preserve-3d;
+  perspective: 100px;
+}
+
+.loading-orb-float {
+  animation: float 2.5s ease-in-out infinite;
+}
+
+.loading-glow {
+  animation: glow-pulse 1.5s ease-in-out infinite;
+}
+
+/* Sipariş dropdown – tema uyumlu kaydırma çubuğu */
+.max-h-52.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+.max-h-52.overflow-y-auto::-webkit-scrollbar-track {
+  border-radius: 3px;
+  background: transparent;
+}
+.max-h-52.overflow-y-auto::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: rgba(156, 163, 175, 0.5);
+  transition: background 0.2s ease;
+}
+.max-h-52.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.8);
+}
+
+/* Özel stepper kullanılan yerde native spinner gizle */
+.number-stepper-wrapper input[type="number"]::-webkit-inner-spin-button,
+.number-stepper-wrapper input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+  display: none;
+}
+
+/* Number input – yükselt/alçalt (spinner): modern, yumuşak kenarlı */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  opacity: 1;
+  margin: 0;
+  height: 100%;
+  min-height: 2rem;
+  width: 1.75rem;
+  cursor: pointer;
+  background: transparent
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 24' fill='none' stroke='%232d3748' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9 L7 5 L10 9'/%3E%3Cpath d='M4 15 L7 19 L10 15'/%3E%3C/svg%3E")
+    no-repeat center;
+  background-size: 12px 20px;
+  border-left: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 0 8px 8px 0;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="number"]::-webkit-inner-spin-button:hover,
+input[type="number"]::-webkit-outer-spin-button:hover {
+  background-color: rgba(51, 65, 85, 0.12);
+  border-left-color: rgba(148, 163, 184, 0.5);
+}
+
+input[type="number"]::-webkit-inner-spin-button:active,
+input[type="number"]::-webkit-outer-spin-button:active {
+  background-color: rgba(51, 65, 85, 0.2);
+}
+
+/* Dark tema: spinner – yumuşak chevron, açık gri */
+.dark input[type="number"]::-webkit-inner-spin-button,
+.dark input[type="number"]::-webkit-outer-spin-button {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 24' fill='none' stroke='%2394a3b8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9 L7 5 L10 9'/%3E%3Cpath d='M4 15 L7 19 L10 15'/%3E%3C/svg%3E");
+  border-left-color: rgba(71, 85, 105, 0.5);
+}
+
+.dark input[type="number"]::-webkit-inner-spin-button:hover,
+.dark input[type="number"]::-webkit-outer-spin-button:hover {
+  background-color: rgba(51, 65, 85, 0.45);
+}

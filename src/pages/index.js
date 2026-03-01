@@ -1,0 +1,10 @@
+export { default as Dashboard } from './Dashboard';
+export { default as Uretim } from './Uretim';
+export { default as MakineEkle } from './MakineEkle';
+export { default as Stok } from './Stok';
+export { default as UrunEkle } from './UrunEkle';
+export { default as Personel } from './Personel';
+export { default as PersonelBilgi } from './PersonelBilgi';
+export { default as PersonelEkle } from './PersonelEkle';
+export { default as SiparisOlustur } from './SiparisOlustur';
+export { default as PlaceholderPage } from './PlaceholderPage';
