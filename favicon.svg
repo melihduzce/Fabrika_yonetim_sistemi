@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Arka plan: sekme rengi -->
+  <rect width="32" height="32" fill="#f0f0f0"/>
+  <!-- Fabrika silueti b�y�k: iki baca, duman, e?imli �at?, sa?da pencereler -->
+  <path fill="#3B82F6" d="M1 30V10h5v20H1zm8 0V10h5v20H9z"/>
+  <path fill="#3B82F6" d="M14 10v20h16V10l-5-8-2 4-5-7v6h-4z"/>
+  <path fill="#3B82F6" d="M30 10v20h1V6h-1v4z"/>
+  <ellipse fill="#3B82F6" cx="3.5" cy="1.5" rx="3" ry="2.2"/>
+  <ellipse fill="#3B82F6" cx="11.5" cy="0.5" rx="3" ry="2.2"/>
+  <rect x="28" y="12" width="1.5" height="5" fill="#3B82F6"/>
+  <rect x="28" y="19" width="1.5" height="5" fill="#3B82F6"/>
+  <rect x="28" y="5" width="1.5" height="5" fill="#3B82F6"/>
+</svg>
