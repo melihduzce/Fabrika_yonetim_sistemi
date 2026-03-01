@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/Fabrika_yonetim_sistemi/static/css/main.3908e43f.css",
-    "main.js": "/Fabrika_yonetim_sistemi/static/js/main.523fc4d1.js",
+    "main.js": "/Fabrika_yonetim_sistemi/static/js/main.96a99c7f.js",
     "index.html": "/Fabrika_yonetim_sistemi/index.html",
     "main.3908e43f.css.map": "/Fabrika_yonetim_sistemi/static/css/main.3908e43f.css.map",
-    "main.523fc4d1.js.map": "/Fabrika_yonetim_sistemi/static/js/main.523fc4d1.js.map"
+    "main.96a99c7f.js.map": "/Fabrika_yonetim_sistemi/static/js/main.96a99c7f.js.map"
   },
   "entrypoints": [
     "static/css/main.3908e43f.css",
-    "static/js/main.523fc4d1.js"
+    "static/js/main.96a99c7f.js"
   ]
 }
