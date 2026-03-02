@@ -35,7 +35,7 @@ public class ProductController : ControllerBase
 
     // PUT: api/Product/5 (GÜNCELLEME - EKLENEN KISIM BURASI)
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutProduct(int id, Product product)
+    public async Task<IActionResult> PutProduct(string id, Product product)
     {
         // 1. URL'deki ID ile gönderilen ürünün ID'si aynı mı kontrol et
         if (id != product.Id)
@@ -70,7 +70,7 @@ public class ProductController : ControllerBase
 
     // DELETE: api/Product/5 (Ürün sil)
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteProduct(int id)
+    public async Task<IActionResult> DeleteProduct(string id)
     {
         var product = await _context.Products.FindAsync(id);
         if (product == null) return NotFound();
@@ -81,7 +81,7 @@ public class ProductController : ControllerBase
     }
 
     // YARDIMCI METOT: Ürün var mı yok mu kontrolü (Put işlemi için gereklidir)
-    private bool ProductExists(int id)
+    private bool ProductExists(string id)
     {
         return _context.Products.Any(e => e.Id == id);
     }

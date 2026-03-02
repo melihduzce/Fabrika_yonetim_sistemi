@@ -1,40 +1,36 @@
-using System;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
-namespace FabrikaBackend.Models
+namespace FabrikaBackend.Models;
+
+public class Stock
 {
-    public class Stock
-    {
-        // Veritabanı için otomatik artan birincil anahtar
-        public int Id { get; set; } 
-        
-        // MULTI-TENANT: Bu stok hangi fabrikaya ait?
-        public int CompanyId { get; set; } 
+    [Key] // Veritabanı için kimlik (Primary Key)
+    [JsonPropertyName("kod")]
+    public string Code { get; set; } = string.Empty; // Örn: STK-001
 
-        [Required(ErrorMessage = "Stok ID zorunludur.")]
-        public string StockCode { get; set; } // stok_id (Örn: STK_D3043)
+    [JsonPropertyName("ad")]
+    public string Name { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Stok kategorisi zorunludur.")]
-        public string Category { get; set; } // stok_kategorisi (Örn: hammadde)
+    // Front-end'in istediği o ince detay: Biri ekranda göstermek, diğeri hesaplamak için!
+    [JsonPropertyName("miktar")]
+    public string QuantityText { get; set; } = string.Empty; // Örn: "450 Adet"
 
-        [Required(ErrorMessage = "Ürün kodu zorunludur.")]
-        public string ProductCode { get; set; } // urun_kodu (Örn: D3043)
+    [JsonPropertyName("miktarSayi")]
+    public double Quantity { get; set; } // Örn: 450
 
-        [Required(ErrorMessage = "Malzeme adı zorunludur.")]
-        public string MaterialName { get; set; } // malzeme_adi (Örn: Rulo Demir)
+    [JsonPropertyName("kapasite")]
+    public double Capacity { get; set; }
 
-        public string MaterialType { get; set; } // malzeme_tipi (Örn: cubuk)
+    [JsonPropertyName("kritik")]
+    public double CriticalLevel { get; set; }
 
-        public string Dimensions { get; set; } // ebat (Örn: Ø22)
+    [JsonPropertyName("birimMaliyet")]
+    public decimal UnitCost { get; set; }
 
-        // Soru işareti (?) bu alanların boş (null) bırakılabileceğini gösterir. Görseldeki boşluklar için şart!
-        public double? ThicknessMm { get; set; } // kalinlik_mm (Örn: 22.0)
-        
-        public double? GrossWeightKg { get; set; } // brut_agirlik_kg (Örn: 0.87)
-        
-        public double? Quantity { get; set; } // miktar (Örn: 558)
+    [JsonPropertyName("birimFiyat")]
+    public decimal UnitPrice { get; set; }
 
-        [Required(ErrorMessage = "Birim zorunludur.")]
-        public string Unit { get; set; } // birim (Örn: kg)
-    }
+    [JsonPropertyName("durum")]
+    public string Status { get; set; } = string.Empty; // "kritik" veya "yeterli"
 }

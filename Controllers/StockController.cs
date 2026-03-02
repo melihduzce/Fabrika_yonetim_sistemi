@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using FabrikaBackend.Data;
 using FabrikaBackend.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace FabrikaBackend.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/Stock")] // Resimdeki gibi büyük S ile bıraktım Swagger'da düzgün çıksın
 [ApiController]
 public class StockController : ControllerBase
 {
@@ -16,44 +16,75 @@ public class StockController : ControllerBase
         _context = context;
     }
 
-    // STOK HAREKETİ EKLE (Giriş/Çıkış Yap)
-    [HttpPost]
-    public async Task<IActionResult> AddTransaction(StockTransaction transaction)
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<Stock>>> GetStocks()
     {
-        // 1. Önce o ürün gerçekten var mı diye bak
-        var product = await _context.Products.FindAsync(transaction.ProductId);
-        if (product == null) return NotFound("Böyle bir ürün bulunamadı!");
-
-        // 2. İşlem Tipine Göre Hesapla
-        if (transaction.Type == TransactionType.Giris)
-        {
-            // Girişse stoğu artır
-            product.StockQuantity += transaction.Quantity;
-        }
-        else if (transaction.Type == TransactionType.Cikis)
-        {
-            // Çıkışsa ve elde yeterince varsa düş
-            if (product.StockQuantity < transaction.Quantity)
-            {
-                return BadRequest($"Yetersiz Stok! Elde sadece {product.StockQuantity} adet var.");
-            }
-            product.StockQuantity -= transaction.Quantity;
-        }
-
-        // 3. Hareketi Kaydet ve Ürünü Güncelle
-        _context.StockTransactions.Add(transaction);
-        await _context.SaveChangesAsync();
-
-        return Ok(new { Mesaj = "Stok Güncellendi", YeniStok = product.StockQuantity });
+        // Burada DbSet adının 'Stocks' veya 'Stock' olmasına dikkat et, AppDbContext'te nasılsa öyle olmalı.
+        // Genelde çoğul yazılır: _context.Stocks
+        return await _context.Stocks.ToListAsync(); 
     }
 
-    // BİR ÜRÜNÜN GEÇMİŞ HAREKETLERİNİ GÖR
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Stock>> GetStock(string id)
+    {
+        var stock = await _context.Stocks.FindAsync(id);
+        if (stock == null) return NotFound("Stok bulunamadı.");
+        return stock;
+    }
+
+    // Senin Swagger'da gözüken o efsanevi Geçmiş metodu!
     [HttpGet("Gecmis/{productId}")]
-    public async Task<ActionResult<IEnumerable<StockTransaction>>> GetHistory(int productId)
+    public async Task<ActionResult<IEnumerable<StockTransaction>>> GetStockHistory(string productId)
     {
         return await _context.StockTransactions
-                             .Where(x => x.ProductId == productId)
-                             .OrderByDescending(x => x.Date)
-                             .ToListAsync();
+            .Where(st => st.ProductId == productId)
+            .OrderByDescending(st => st.Date)
+            .ToListAsync();
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<Stock>> CreateStock(Stock stock)
+    {
+        if (string.IsNullOrEmpty(stock.Code))
+        {
+            stock.Code = "STK-" + new Random().Next(1000, 9999);
+        }
+
+        _context.Stocks.Add(stock);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetStock), new { id = stock.Code }, stock);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateStock(string id, Stock stock)
+    {
+        if (id != stock.Code) return BadRequest("Girdiğiniz ID ile Stok Kodu uyuşmuyor!");
+
+        _context.Entry(stock).State = EntityState.Modified;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!_context.Stocks.Any(e => e.Code == id)) return NotFound("Güncellenecek stok bulunamadı.");
+            else throw;
+        }
+
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteStock(string id)
+    {
+        var stock = await _context.Stocks.FindAsync(id);
+        if (stock == null) return NotFound("Silinecek stok bulunamadı.");
+
+        _context.Stocks.Remove(stock);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
     }
 }

@@ -1,60 +1,92 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization; // JSON çevirmenleri için alet çantamız geldi!
 
 namespace FabrikaBackend.Models
 {
     public class Personnel
     {
         // Temel Bilgiler
+        [Key]
+        [JsonPropertyName("id")]
         public int Id { get; set; }
         
         // MULTI-TENANT: Bu personel hangi fabrikada çalışıyor?
+        [JsonPropertyName("companyId")]
         public int CompanyId { get; set; } 
 
         [Required(ErrorMessage = "Ad zorunludur.")]
-        public string FirstName { get; set; } // ad
+        [JsonPropertyName("ad")]
+        public string FirstName { get; set; } = string.Empty; // Sarı uyarıları önlemek için boş atandı
 
         [Required(ErrorMessage = "Soyad zorunludur.")]
-        public string LastName { get; set; } // soyad
+        [JsonPropertyName("soyad")]
+        public string LastName { get; set; } = string.Empty;
 
         // TC KİMLİK KISITLAMASI (Tam 11 hane ve sadece rakam)
         [Required(ErrorMessage = "TC Kimlik No zorunludur.")]
         [StringLength(11, MinimumLength = 11, ErrorMessage = "TC Kimlik No tam 11 haneli olmalıdır.")]
         [RegularExpression("^[0-9]*$", ErrorMessage = "TC Kimlik No sadece rakamlardan oluşmalıdır.")]
-        public string TcNo { get; set; } 
+        [JsonPropertyName("tcNo")]
+        public string TcNo { get; set; } = string.Empty;
 
         // TELEFON KISITLAMASI (0 ile başlar, tam 11 hane)
         [Required(ErrorMessage = "Telefon numarası zorunludur.")]
         [StringLength(11, MinimumLength = 11, ErrorMessage = "Telefon numarası 11 haneli olmalıdır (Örn: 05551234567).")]
         [RegularExpression("^0[0-9]{10}$", ErrorMessage = "Telefon numarası 0 ile başlamalı ve sadece rakam içermelidir.")]
-        public string PhoneNumber { get; set; } // telefon
+        [JsonPropertyName("telefon")]
+        public string PhoneNumber { get; set; } = string.Empty;
 
         // İş Bilgileri
-        public string Department { get; set; } // departman
-        public string Position { get; set; } // pozisyon
-        public decimal Salary { get; set; } // maas
-        public DateTime HireDate { get; set; } // ise_giris_tarihi
+        [JsonPropertyName("departman")]
+        public string Department { get; set; } = string.Empty;
+
+        [JsonPropertyName("pozisyon")]
+        public string Position { get; set; } = string.Empty;
+
+        [JsonPropertyName("maas")]
+        public decimal Salary { get; set; }
+
+        [JsonPropertyName("ise_giris_tarihi")]
+        public DateTime HireDate { get; set; }
 
         // İzin Bilgileri
-        public int TotalAnnualLeave { get; set; } // yillik_izin_hakki
-        public int UsedLeave { get; set; } // kullanilan_izin
-        public int RemainingLeave { get; set; } // kalan_izin
+        [JsonPropertyName("yillik_izin_hakki")]
+        public int TotalAnnualLeave { get; set; }
+
+        [JsonPropertyName("kullanilan_izin")]
+        public int UsedLeave { get; set; }
+
+        [JsonPropertyName("kalan_izin")]
+        public int RemainingLeave { get; set; }
 
         // Performans ve Üretim
-        public double PerformanceScore { get; set; } // performans_puani
-        public double AverageDailyProduction { get; set; } // ortalama_gunluk_uretim
-        public int AbsenteeismDays { get; set; } // devamsizlik_gun
-        public double OvertimeHours { get; set; } // fazla_mesai_saat
-        public string Certifications { get; set; } // egitim_sertifikalari
+        [JsonPropertyName("performans_puani")]
+        public double PerformanceScore { get; set; }
+
+        [JsonPropertyName("ortalama_gunluk_uretim")]
+        public double AverageDailyProduction { get; set; }
+
+        [JsonPropertyName("devamsizlik_gun")]
+        public int AbsenteeismDays { get; set; }
+
+        [JsonPropertyName("fazla_mesai_saat")]
+        public double OvertimeHours { get; set; }
+
+        [JsonPropertyName("egitim_sertifikalari")]
+        public string Certifications { get; set; } = string.Empty;
 
         // Acil Durum Bilgileri
-        public string EmergencyContactName { get; set; } // acil_durum_kisi
+        [JsonPropertyName("acil_durum_kisi")]
+        public string EmergencyContactName { get; set; } = string.Empty;
 
         [StringLength(11, MinimumLength = 11, ErrorMessage = "Acil durum telefonu 11 haneli olmalıdır.")]
         [RegularExpression("^0[0-9]{10}$", ErrorMessage = "Acil durum telefonu geçerli bir formatta olmalıdır.")]
-        public string EmergencyContactPhone { get; set; } // acil_durum_tel
+        [JsonPropertyName("acil_durum_tel")]
+        public string EmergencyContactPhone { get; set; } = string.Empty;
 
         // Durum
-        public bool IsActive { get; set; } = true; // aktif (Varsayılan olarak işe giren kişi aktiftir)
+        [JsonPropertyName("aktif")]
+        public bool IsActive { get; set; } = true;
     }
 }

@@ -22,25 +22,26 @@ public class AuthController : ControllerBase
 
     // --- 1. KAYIT OL (REGISTER) ---
     [HttpPost("register")]
-    public IActionResult Register(UserRegisterDto request)
+    public async Task<IActionResult> Register(UserRegisterDto request)
     {
-        var userExists = _context.Users.Any(u => u.Email == request.Email);
-        if (userExists)
+        // Email daha önce alınmış mı kontrolü (varsa sende aynen kalsın)
+        if (_context.Users.Any(u => u.Email == request.Email))
         {
-            return BadRequest("Bu e-posta adresi sistemde zaten var!");
+            return BadRequest("Bu email zaten kullanılıyor.");
         }
 
+        // İŞTE SİLİNEN O EFSANE KISIM! Tertemiz haliyle baştan tanımlıyoruz:
         var newUser = new User
         {
             Email = request.Email,
-            Password = request.Password, 
-            Role = string.IsNullOrEmpty(request.Role) ? "Personel" : request.Role 
+            Password = request.Password, // Gerçek hayatta şifrelenir
+            Role = "Admin" // DTO'dan kestiğimiz için buraya ellerimizle sabitledik!
         };
 
         _context.Users.Add(newUser);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
 
-        return Ok($"Kayıt başarılı! Pozisyonunuz: {newUser.Role}. Artık giriş yapabilirsiniz.");
+        return Ok(new { Mesaj = "Kayıt başarılı!", Kullanici = newUser });
     }
 
     // --- 2. GİRİŞ YAP (LOGIN) VE YAKA KARTI VER ---

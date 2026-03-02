@@ -1,23 +1,22 @@
 using System.Text.Json.Serialization;
-using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations; // Key için ekledik
 
 namespace FabrikaBackend.Models;
 
 public class StockTransaction
 {
+    [Key]
     public int Id { get; set; }
 
-    // Hangi ürün?
-    public int ProductId { get; set; }
+    //ProductId artık metin (string) olduğu için uyumlu hale getirdik!
+    public string ProductId { get; set; } = string.Empty;
 
-    // Hata veren kısımlar bunlardı (Şimdi ekliyoruz)
     public int Quantity { get; set; }      // Adet
     public TransactionType Type { get; set; } // Giriş/Çıkış Tipi
 
     public DateTime Date { get; set; } = DateTime.Now;
 }
 
-// "TransactionType bulunamadı" hatasını çözen kısım burası:
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TransactionType
 {
