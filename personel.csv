@@ -1,0 +1,9 @@
+﻿personel_id,ad,soyad,tc_no,telefon,departman,pozisyon,maas,ise_giris_tarihi,yillik_izin_hakki,kullanilan_izin,kalan_izin,performans_puani,ortalama_gunluk_uretim,devamsizlik_gun,fazla_mesai_saat,egitim_sertifikalari,acil_durum_kisi,acil_durum_tel,aktif
+P001,,,,,yonetim,mudur,,2018-03-15,20,8,12,,,0,0,"yonetim,is_guvenligi",,,1
+P002,,,,,yonetim,mudur,,2019-06-01,18,5,13,,,1,12,"yonetim,is_guvenligi",,,1
+P003,,,,,yemekhane,yemekhane_gorevlisi,,2021-01-10,14,6,8,,,2,0,"hijyen,is_guvenligi",,,1
+P004,,,,,uretim,ustabasi,,2015-09-20,22,10,12,92.5,,0,45,"pres_operasyon,is_guvenligi,ilk_yardim,forklift",,,1
+P005,,,,,uretim,pres_operatoru,,2020-04-15,16,7,9,88.0,1850.0,1,24,"pres_operasyon,is_guvenligi",,,1
+P006,,,,,uretim,pres_operatoru,,2021-08-01,14,4,10,75.5,1620.0,3,16,"pres_operasyon,is_guvenligi",,,1
+P007,,,,,uretim,pres_operatoru,,2019-11-10,17,12,5,82.0,1780.0,2,32,"pres_operasyon,is_guvenligi,forklift",,,1
+P008,,,,,uretim,pres_operatoru,,2023-02-20,14,2,12,68.0,1450.0,1,8,"pres_operasyon,is_guvenligi",,,1
