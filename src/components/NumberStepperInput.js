@@ -23,6 +23,13 @@ const NumberStepperInput = ({
   const numMin = min != null ? (typeof min === 'string' ? parseFloat(min) : min) : -Infinity;
   const numMax = max != null ? (typeof max === 'string' ? parseFloat(max) : max) : Infinity;
 
+  const roundToStep = (n) => {
+    if (numStep >= 1) return Math.round(n);
+    const decimals = String(numStep).split('.')[1]?.length ?? 2;
+    const factor = Math.pow(10, decimals);
+    return Math.round(n * factor) / factor;
+  };
+
   const handleInputChange = (e) => {
     const v = e.target.value;
     if (v === '' || v === '-') {
@@ -34,7 +41,8 @@ const NumberStepperInput = ({
   };
 
   const stepUp = () => {
-    const next = Math.min(numMax, numValue + numStep);
+    const raw = Math.min(numMax, numValue + numStep);
+    const next = roundToStep(raw);
     if (next !== numValue) {
       const synthetic = { target: { value: String(next) } };
       onChange?.(synthetic);
@@ -42,12 +50,14 @@ const NumberStepperInput = ({
   };
 
   const stepDown = () => {
-    const next = Math.max(numMin, numValue - numStep);
+    const raw = Math.max(numMin, numValue - numStep);
+    const next = roundToStep(raw);
     if (next !== numValue) {
       const synthetic = { target: { value: String(next) } };
       onChange?.(synthetic);
     }
   };
+
 
   const inputCls = isDark
     ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-500'

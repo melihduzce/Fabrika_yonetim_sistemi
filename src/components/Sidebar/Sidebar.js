@@ -24,7 +24,9 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 font-medium ${
-                activeTab === item.id || (item.id === 'personel' && ['personel-bilgi', 'personel-ekle'].includes(activeTab))
+                activeTab === item.id ||
+                (item.id === 'personel' && ['personel-bilgi', 'personel-ekle'].includes(activeTab)) ||
+                (item.id === 'musteriler' && ['musteriler-ekle', 'musteri-bilgi'].includes(activeTab))
                   ? 'bg-blue-600 text-white shadow-lg translate-x-1'
                   : 'hover:bg-gray-800 hover:text-white'
               }`}

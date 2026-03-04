@@ -5,6 +5,7 @@ import LoginScreen from 'components/LoginScreen/LoginScreen';
 import RegisterScreen from 'components/RegisterScreen/RegisterScreen';
 import LoadingScreen from 'components/LoadingScreen/LoadingScreen';
 import { MainContent } from 'components/Layout';
+import { ToastProvider } from 'contexts/ToastContext';
 
 const DEFAULT_USER_NAME = 'Yönetici';
 
@@ -102,9 +103,10 @@ function App() {
   }
 
   return (
-    <div className="font-sans relative">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} />
-      <MainContent
+    <ToastProvider>
+      <div className="font-sans relative">
+        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} />
+        <MainContent
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         isDark={isDark}
@@ -117,7 +119,8 @@ function App() {
           <LoadingScreen />
         </div>
       )}
-    </div>
+      </div>
+    </ToastProvider>
   );
 }
 

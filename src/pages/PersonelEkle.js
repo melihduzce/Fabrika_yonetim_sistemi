@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { ArrowLeft, UserPlus, Users, Trash2 } from 'lucide-react';
 import { getThemeClasses } from 'utils/theme';
 import ThemeDropdown from 'components/ThemeDropdown';
+import { useToast } from 'contexts/ToastContext';
 import { DEPARTMAN_OPTIONS, POZISYON_BY_DEPARTMAN } from 'constants/departmanPozisyon';
 
 const inputCls = (isDark) =>
   `w-full p-3 rounded-lg border bg-transparent ${isDark ? 'border-gray-600 text-white placeholder-gray-500' : 'border-gray-300 text-gray-900 placeholder-gray-400'}`;
 
 const PersonelEkle = ({ isDark, personelList = [], setPersonelList, onBack }) => {
+  const { toast } = useToast();
   const { bgCard, textTitle, textSub, borderCol } = getThemeClasses(isDark);
   const [view, setView] = useState('menu'); // 'menu' | 'ekle' | 'cikar'
   const [firstName, setFirstName] = useState('');
@@ -61,6 +63,7 @@ const PersonelEkle = ({ isDark, personelList = [], setPersonelList, onBack }) =>
     setYemek('');
     setIseGirisTarihi('');
     setEgitimSertifikalariText('');
+    toast('Personel eklendi');
   };
 
   const handleRemove = (id, adSoyad) => {
@@ -69,6 +72,7 @@ const PersonelEkle = ({ isDark, personelList = [], setPersonelList, onBack }) =>
       : 'Bu personeli listeden çıkarmak istiyor musunuz?';
     if (!window.confirm(mesaj)) return;
     setPersonelList(personelList.filter((p) => p.id !== id));
+    toast('Personel listeden çıkarıldı');
   };
 
   const linkCls = `flex items-center gap-2 text-sm font-medium ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`;

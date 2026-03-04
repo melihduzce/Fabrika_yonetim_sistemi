@@ -2,17 +2,9 @@ import React, { useState } from 'react';
 import { Plus, ShoppingCart } from 'lucide-react';
 import { getThemeClasses } from 'utils/theme';
 import ThemeDropdown from 'components/ThemeDropdown';
+import { useToast } from 'contexts/ToastContext';
 import NumberStepperInput from 'components/NumberStepperInput';
-import { MOCK_SIPARISLER, MOCK_MUSTERILER } from 'constants/siparisData';
-
-// Mock: Ürünler (birimSüre: saat/birim, birimMaliyet: ₺/birim, gunlukUretim: birim/gün)
-const MOCK_URUNLER = [
-  { id: 'UR-001', ad: 'Çelik Levha (5mm)', birim: 'Adet', birimFiyat: 85, birimMaliyet: 72, birimSure: 0.5, gunlukUretim: 50 },
-  { id: 'UR-002', ad: 'Plastik Granül PP', birim: 'kg', birimFiyat: 12, birimMaliyet: 9.5, birimSure: 0.02, gunlukUretim: 2000 },
-  { id: 'UR-003', ad: 'Endüstriyel Boya', birim: 'Lt', birimFiyat: 45, birimMaliyet: 38, birimSure: 0.05, gunlukUretim: 500 },
-  { id: 'UR-004', ad: 'Kauçuk Conta', birim: 'Adet', birimFiyat: 8, birimMaliyet: 6, birimSure: 0.01, gunlukUretim: 5000 },
-  { id: 'UR-005', ad: 'Paslanmaz Vida M8', birim: 'Adet', birimFiyat: 2.5, birimMaliyet: 1.8, birimSure: 0.005, gunlukUretim: 15000 },
-];
+import { MOCK_SIPARISLER, MOCK_MUSTERILER, MOCK_URUNLER } from 'constants/siparisData';
 
 /** Miktar ve günlük üretim kapasitesine göre tahmini üretim süresi (gün/saat metni) */
 const tahminiUretimSuresiMetin = (miktar, gunlukUretim) => {
@@ -38,6 +30,7 @@ const durumRenk = (durum, isDark) => {
 };
 
 const SiparisOlustur = ({ isDark }) => {
+  const { toast } = useToast();
   const { bgCard, textTitle, textSub } = getThemeClasses(isDark);
   const [seciliMusteri, setSeciliMusteri] = useState(MOCK_MUSTERILER[0]?.id ?? '');
   const [seciliUrun, setSeciliUrun] = useState(MOCK_URUNLER[0]?.id ?? '');
@@ -70,8 +63,7 @@ const SiparisOlustur = ({ isDark }) => {
 
   const handleSiparisEkle = (e) => {
     e.preventDefault();
-    // Mock: Gerçek API çağrısı yok, sadece bilgi
-    alert(`Sipariş oluşturuldu (mock): ${musteri?.unvan} - ${urun?.ad} x ${miktar} ${urun?.birim}`);
+    toast('Sipariş oluşturuldu');
   };
 
   return (

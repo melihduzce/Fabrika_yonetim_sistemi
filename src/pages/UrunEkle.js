@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Box } from 'lucide-react';
 import { getThemeClasses } from 'utils/theme';
-import ThemeDropdown from 'components/ThemeDropdown';
 import NumberStepperInput from 'components/NumberStepperInput';
+import { useToast } from 'contexts/ToastContext';
+import ThemeDropdown from 'components/ThemeDropdown';
 
 const BIRIM_OPTIONS = [
   { id: 'saat', ad: 'Saat' },
@@ -25,12 +26,13 @@ const initialMakineFlags = () =>
   MAKINE_KOLONLARI.reduce((acc, { key }) => ({ ...acc, [key]: false }), {});
 
 const UrunEkle = ({ isDark, onBack }) => {
+  const { toast } = useToast();
   const { textTitle, textSub, borderCol } = getThemeClasses(isDark);
   const [urunKodu, setUrunKodu] = useState('');
   const [urunAdi, setUrunAdi] = useState('');
   const [hammaddeTuru, setHammaddeTuru] = useState('');
   const [birimUretimSuresi, setBirimUretimSuresi] = useState('');
-  const [birimSureBirim, setBirimSureBirim] = useState('saat');
+  const [birimSureBirim, setBirimSureBirim] = useState('');
   const [beklenenHurdaMiktar, setBeklenenHurdaMiktar] = useState('');
   const [brutAgirlik, setBrutAgirlik] = useState('');
   const [netAgirlik, setNetAgirlik] = useState('');
@@ -44,7 +46,11 @@ const UrunEkle = ({ isDark, onBack }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // CSV satırı üretmek için: urun_kodu, 1000_ton, 800_ton, ... (0 veya 1)
+    if (!birimSureBirim) {
+      alert('Lütfen birim seçiniz.');
+      return;
+    }
+    toast('Ürün kaydedildi');
     onBack();
   };
 
@@ -61,6 +67,9 @@ const UrunEkle = ({ isDark, onBack }) => {
     }`;
   const checkboxTextCls = (checked) =>
     `text-sm font-medium ${checked ? (isDark ? 'text-blue-200' : 'text-blue-800') : isDark ? 'text-gray-200' : 'text-gray-900'}`;
+
+  const boxSectionCls = `${isDark ? 'border-gray-600 bg-gray-700/30' : 'border-gray-300 bg-gray-50'} p-4 rounded-lg border`;
+  const boxGridCls = 'grid gap-3';
 
   return (
     <div className={`p-6 rounded-xl shadow-sm border w-full transition-colors duration-300 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
@@ -120,22 +129,24 @@ const UrunEkle = ({ isDark, onBack }) => {
               step={0.01}
               placeholder="Örn: 0.5"
               isDark={isDark}
-              className="flex-1 min-w-0"
+              className="w-full"
             />
           </div>
-          <div className="flex-1 min-w-0 flex flex-col [&_button]:h-[42px] [&_button]:py-0 [&_button]:flex [&_button]:items-center">
-            <label className={`text-sm font-medium mb-2 ${textSub}`}>Birim</label>
+          <div className="sm:w-40 flex flex-col">
+            <label className={`text-sm font-medium mb-2 ${textSub}`}>Birim *</label>
             <ThemeDropdown
-              label={null}
               options={BIRIM_OPTIONS}
               value={birimSureBirim}
               onChange={setBirimSureBirim}
               renderLabel={(o) => o.ad}
-              placeholder="Birim seçin"
+              placeholder="Seçiniz"
               isDark={isDark}
             />
           </div>
         </div>
+        <p className={`text-xs ${textSub} -mt-1`}>
+          Analizlerin doğru yapılabilmesi için lütfen birim üretim süresini doğru ve eksiksiz girdiğinizden emin olunuz.
+        </p>
 
         <div>
           <label className={`block text-sm font-medium mb-2 ${textSub}`}>Beklenen hurda miktarı</label>
@@ -207,8 +218,8 @@ const UrunEkle = ({ isDark, onBack }) => {
 
         <div>
           <label className={`block text-sm font-medium mb-2 ${textSub}`}>Pres / Makine kullanımı</label>
-          <div className={`p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700/30' : 'border-gray-300 bg-gray-50'}`}>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className={boxSectionCls}>
+            <div className={`${boxGridCls} grid-cols-2 sm:grid-cols-4`}>
               {MAKINE_KOLONLARI.map(({ key, label }) => {
                 const checked = !!makineFlags[key];
                 return (

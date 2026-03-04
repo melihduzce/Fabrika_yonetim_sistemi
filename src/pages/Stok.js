@@ -1,5 +1,5 @@
-import React from 'react';
-import { Plus, Sparkles } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Plus, Sparkles, Search } from 'lucide-react';
 import { DepoBarChart } from 'charts';
 import { getThemeClasses } from 'utils/theme';
 
@@ -11,6 +11,22 @@ const STOK_TABLOSU = [
 
 const Stok = ({ isDark, onUrunEkle }) => {
   const { bgCard, textTitle, textSub } = getThemeClasses(isDark);
+  const [arama, setArama] = useState('');
+
+  const inputCls = isDark
+    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500/30'
+    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-400 focus:ring-blue-400/30';
+
+  const filtrelenmisStok = useMemo(() => {
+    const q = (arama || '').trim().toLowerCase();
+    if (!q) return STOK_TABLOSU;
+    return STOK_TABLOSU.filter((row) => {
+      const kod = (row.kod || '').toLowerCase();
+      const ad = (row.ad || '').toLowerCase();
+      const miktar = (row.miktar || '').toLowerCase();
+      return kod.includes(q) || ad.includes(q) || miktar.includes(q);
+    });
+  }, [arama]);
 
   return (
     <div className="space-y-6">
@@ -20,7 +36,7 @@ const Stok = ({ isDark, onUrunEkle }) => {
       </div>
 
       <div className={`p-6 rounded-xl shadow-sm border overflow-hidden transition-colors duration-300 ${bgCard}`}>
-        <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
           <h2 className={`text-lg font-bold ${textTitle}`}>Depo Stok Durumu</h2>
           <div className="flex items-center gap-2">
             <button
@@ -44,6 +60,22 @@ const Stok = ({ isDark, onUrunEkle }) => {
             </button>
           </div>
         </div>
+        <div className="flex items-center gap-2 w-full mb-6">
+          <input
+            type="text"
+            value={arama}
+            onChange={(e) => setArama(e.target.value)}
+            placeholder="Ürün kodu, ad veya miktara göre ara..."
+            className={`flex-1 min-w-0 px-4 py-2.5 rounded-lg border outline-none focus:ring-2 transition-colors ${inputCls}`}
+          />
+          <button
+            type="button"
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors flex-shrink-0 ${isDark ? 'border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600' : 'border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200'}`}
+            title="Ara"
+          >
+            <Search size={18} /> Ara
+          </button>
+        </div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-left">
             <thead
@@ -64,7 +96,7 @@ const Stok = ({ isDark, onUrunEkle }) => {
               </tr>
             </thead>
             <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-100'}`}>
-              {STOK_TABLOSU.map((row) => {
+              {filtrelenmisStok.map((row) => {
                 const kritik = row.durum === 'kritik';
                 const durumBadgeCls = kritik
                   ? isDark ? 'bg-yellow-900/30 text-yellow-400 border-yellow-800' : 'bg-yellow-100 text-yellow-800 border-yellow-200'

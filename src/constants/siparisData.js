@@ -9,6 +9,14 @@ export const MOCK_MUSTERILER = [
   { id: 'M4', unvan: 'Omega Makine Ltd.', yetkili: 'Zeynep Öz', tel: '0232 555 0404' },
 ];
 
+export const MOCK_URUNLER = [
+  { id: 'UR-001', ad: 'Çelik Levha (5mm)', birim: 'Adet', birimFiyat: 85, birimMaliyet: 72, birimSure: 0.5, gunlukUretim: 50 },
+  { id: 'UR-002', ad: 'Plastik Granül PP', birim: 'kg', birimFiyat: 12, birimMaliyet: 9.5, birimSure: 0.02, gunlukUretim: 2000 },
+  { id: 'UR-003', ad: 'Endüstriyel Boya', birim: 'Lt', birimFiyat: 45, birimMaliyet: 38, birimSure: 0.05, gunlukUretim: 500 },
+  { id: 'UR-004', ad: 'Kauçuk Conta', birim: 'Adet', birimFiyat: 8, birimMaliyet: 6, birimSure: 0.01, gunlukUretim: 5000 },
+  { id: 'UR-005', ad: 'Paslanmaz Vida M8', birim: 'Adet', birimFiyat: 2.5, birimMaliyet: 1.8, birimSure: 0.005, gunlukUretim: 15000 },
+];
+
 export const MOCK_SIPARISLER = [
   { no: 'SIP-2025-001', musteriId: 'M1', urunId: 'UR-001', miktar: 120, birimFiyat: 85, tarih: '25.02.2025', durum: 'Onaylandı' },
   { no: 'SIP-2025-002', musteriId: 'M2', urunId: 'UR-002', miktar: 500, birimFiyat: 12, tarih: '24.02.2025', durum: 'Üretimde' },

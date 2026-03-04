@@ -1,11 +1,16 @@
 export { default as Dashboard } from './Dashboard';
 export { default as Uretim } from './Uretim';
 export { default as MakineEkle } from './MakineEkle';
+export { default as MakineBilgi } from './MakineBilgi';
 export { default as Stok } from './Stok';
 export { default as UrunEkle } from './UrunEkle';
 export { default as Personel } from './Personel';
 export { default as PersonelBilgi } from './PersonelBilgi';
 export { default as PersonelEkle } from './PersonelEkle';
 export { default as SiparisOlustur } from './SiparisOlustur';
+export { default as Musteriler } from './Musteriler';
+export { default as MusteriEkle } from './MusteriEkle';
+export { default as MusteriBilgi } from './MusteriBilgi';
 export { default as Muhasebe } from './Muhasebe';
+export { default as GiderDüzenle } from './GiderDüzenle';
 export { default as PlaceholderPage } from './PlaceholderPage';

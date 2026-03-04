@@ -1,5 +1,21 @@
 /* Fabrika YS - Uygulama genel stilleri (gerekirse kullanılır) */
 
+/* Toast bildirim giriş animasyonu */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toast-item {
+  animation: fadeIn 0.2s ease-out;
+}
+
 .App {
   text-align: center;
 }

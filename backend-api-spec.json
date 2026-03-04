@@ -1,9 +1,17 @@
 {
   "meta": {
     "proje": "Fabrika Yönetim Sistemi (Fabrika YS)",
-    "versiyon": "2.0",
+    "versiyon": "2.1",
     "aciklama": "Frontend ile birebir uyumlu API spesifikasyonu. Backend ekibinin endpoint, şema ve örnek verileri tek dosyadan takip etmesi için hazırlanmıştır.",
-    "tarih_formatı": "DD.MM.YYYY (örn: 25.02.2025)",
+    "son_guncelleme": "2025-02-26",
+    "degisiklik_log": [
+      "v2.1: Müşteri tam CRUD (Müşteriler / Müşteri Ekle / Müşteri Bilgi) şeması ve endpoint'leri eklendi.",
+      "v2.1: Makine şemasına idKod alanı ve sil endpoint'i eklendi; örnek liste 6 makineye çıkarıldı.",
+      "v2.1: Muhasebe giderler için tek liste alternatifi (id, kalem, tutar, tip) ve CRUD endpoint'leri eklendi.",
+      "v2.1: Tarih alanları için ISO 8601 (YYYY-MM-DD) kabul notu eklendi.",
+      "v2.1: referans_degerler.musteri_tip eklendi."
+    ],
+    "tarih_formatı": "DD.MM.YYYY (örn: 25.02.2025). ISO 8601 (YYYY-MM-DD) da kabul edilir; frontend her iki formatı destekler.",
     "para_birimi": "TRY (₺), ondalık ayırıcı virgül (tr-TR)",
     "varsayilan_base_url": "https://api.example.com/v1"
   },
@@ -60,7 +68,8 @@
     "siparis_durumlari": ["Beklemede", "Onaylandı", "Üretimde", "Sevk Edildi"],
     "stok_durum": ["kritik", "yeterli"],
     "muhasebe_sabit_gider_kalemleri": ["Elektrik", "İşçilik", "SGK", "Yol", "Yemek", "Bakım", "Nakliye", "Kira"],
-    "muhasebe_degisken_gider_kalemleri": ["Hammadde alımı", "Hurda kaybı"]
+    "muhasebe_degisken_gider_kalemleri": ["Hammadde alımı", "Hurda kaybı"],
+    "musteri_tip": ["kurumsal", "bireysel"]
   },
 
   "personel": {
@@ -143,9 +152,9 @@
   },
 
   "musteri": {
-    "aciklama": "Sipariş oluşturma ve Muhasebe sayfalarında kullanılan müşteri listesi.",
+    "aciklama": "Sipariş dropdown ve Muhasebe için kısa müşteri listesi (id, unvan, yetkili, tel). Tam liste için musteri_tam kullanılır.",
     "endpoints": {
-      "liste": { "method": "GET", "path": "/api/musteriler" }
+      "liste": { "method": "GET", "path": "/api/musteriler/kisa", "aciklama": "Sipariş/Muhasebe dropdown için; musteri_tam listeden türetilebilir" }
     },
     "schema": {
       "id": "string (örn: M1, benzersiz)",
@@ -158,6 +167,41 @@
       { "id": "M2", "unvan": "XYZ Metal San. Tic. Ltd.", "yetkili": "Fatma Demir", "tel": "0312 555 0202" },
       { "id": "M3", "unvan": "Delta Endüstri A.Ş.", "yetkili": "Mehmet Kaya", "tel": "0216 555 0303" },
       { "id": "M4", "unvan": "Omega Makine Ltd.", "yetkili": "Zeynep Öz", "tel": "0232 555 0404" }
+    ]
+  },
+
+  "musteri_tam": {
+    "aciklama": "Müşteriler sayfası, Müşteri Ekle, Müşteri Bilgi için tam müşteri CRUD. idKod siparişlerdeki musteriId ile eşleşir.",
+    "endpoints": {
+      "liste": { "method": "GET", "path": "/api/musteriler" },
+      "tekil": { "method": "GET", "path": "/api/musteriler/:id" },
+      "ekle": { "method": "POST", "path": "/api/musteriler" },
+      "sil": { "method": "DELETE", "path": "/api/musteriler/:id" }
+    },
+    "schema": {
+      "id": "number (benzersiz, otomatik)",
+      "idKod": "string (örn: M1, B1; siparişlerde musteriId olarak kullanılır)",
+      "ad": "string (zorunlu)",
+      "soyad": "string (zorunlu)",
+      "email": "string | null",
+      "telefon": "string | null",
+      "tip": "string: 'kurumsal' | 'bireysel' (referans_degerler.musteri_tip)",
+      "unvan": "string | null (kurumsal için şirket adı; bireysel için null)"
+    },
+    "ekle_request_body": {
+      "idKod": "string (opsiyonel; boşsa kurumsal için M{n}, bireysel için B{n} otomatik önerilir)",
+      "ad": "string (zorunlu)",
+      "soyad": "string (zorunlu)",
+      "email": "string | null",
+      "telefon": "string | null",
+      "tip": "string (zorunlu): 'kurumsal' | 'bireysel'",
+      "unvan": "string | null (sadece kurumsal için)"
+    },
+    "ornek_liste": [
+      { "id": 1, "idKod": "M1", "ad": "Ahmet", "soyad": "Yılmaz", "email": "ahmet.yilmaz@abcoto.com", "telefon": "0212 555 0101", "tip": "kurumsal", "unvan": "ABC Otomotiv A.Ş." },
+      { "id": 2, "idKod": "M2", "ad": "Fatma", "soyad": "Demir", "email": "fatma.demir@xyzmetal.com", "telefon": "0312 555 0202", "tip": "kurumsal", "unvan": "XYZ Metal San. Tic. Ltd." },
+      { "id": 5, "idKod": "B1", "ad": "Can", "soyad": "Öztürk", "email": "can.ozturk@mail.com", "telefon": "0532 111 2233", "tip": "bireysel", "unvan": null },
+      { "id": 7, "idKod": "M5", "ad": "Serkan", "soyad": "Aydın", "email": "serkan.aydin@betoncelik.com", "telefon": "0212 555 9900", "tip": "kurumsal", "unvan": "Beton Çelik İnş. A.Ş." }
     ]
   },
 
@@ -208,11 +252,11 @@
     "kapasite_notu": "Açık siparişler (Beklemede, Onaylandı, Üretimde) toplam üretim süresi aylık kapasite (örn. 200 saat) ile karşılaştırılır.",
     "schema": {
       "no": "string (örn: SIP-2025-001, benzersiz)",
-      "musteriId": "string (musteri.id)",
+      "musteriId": "string (musteri.id veya musteri_tam.idKod)",
       "urunId": "string (urun.id)",
       "miktar": "number",
       "birimFiyat": "number (TRY, ürünün o anki birim fiyatı)",
-      "tarih": "string (DD.MM.YYYY)",
+      "tarih": "string (DD.MM.YYYY veya ISO 8601 YYYY-MM-DD; frontend her ikisini kabul eder)",
       "durum": "string (durum_degerleri)"
     },
     "ekle_request_body": {
@@ -284,35 +328,58 @@
   },
 
   "makine": {
-    "aciklama": "Üretim hattı makine listesi. Makine Ekle sayfasından eklenir.",
+    "aciklama": "Üretim hattı makine listesi. Üretim Takibi, Makine Düzenle, Makine Bilgi sayfalarında kullanılır.",
     "endpoints": {
       "liste": { "method": "GET", "path": "/api/makineler" },
-      "ekle": { "method": "POST", "path": "/api/makineler" }
+      "tekil": { "method": "GET", "path": "/api/makineler/:id" },
+      "ekle": { "method": "POST", "path": "/api/makineler" },
+      "sil": { "method": "DELETE", "path": "/api/makineler/:id", "aciklama": "Makine listeden çıkar (Makine Düzenle > Makine Sil)" }
     },
     "schema": {
-      "id": "number | string (benzersiz)",
-      "ad": "string",
+      "id": "number (benzersiz, otomatik)",
+      "idKod": "string (örn: MK-1; boş bırakılırsa MK-{id} otomatik atanabilir)",
+      "ad": "string (zorunlu)",
       "detay": "string | null (örn: Sıcaklık: 85°C)"
     },
     "ekle_request_body": {
       "ad": "string (zorunlu)",
-      "id": "string (opsiyonel, örn: 1001 veya MK-001)",
+      "idKod": "string (opsiyonel, örn: MK-001)",
       "detay": "string (opsiyonel)"
     },
     "ornek_liste": [
-      { "id": 1, "ad": "CNC Pres - 01", "detay": "Sıcaklık: 85°C" },
-      { "id": 2, "ad": "Montaj Hattı - 03", "detay": "Sıcaklık: 72°C" },
-      { "id": 3, "ad": "Paketleme - B2", "detay": "Sıcaklık: 62°C" }
+      { "id": 1, "idKod": "MK-1", "ad": "CNC Pres - 01", "detay": "Sıcaklık: 85°C" },
+      { "id": 2, "idKod": "MK-2", "ad": "Montaj Hattı - 03", "detay": "Sıcaklık: 72°C" },
+      { "id": 3, "idKod": "MK-3", "ad": "Paketleme - B2", "detay": "Sıcaklık: 62°C" },
+      { "id": 4, "idKod": "MK-4", "ad": "Kesim Makinesi - K1", "detay": "Lazer kesim" },
+      { "id": 5, "idKod": "MK-5", "ad": "Büküm Presi - 400T", "detay": "Hidrolik, 400 ton" },
+      { "id": 6, "idKod": "MK-6", "ad": "Kaynak Robotu - R02", "detay": "6 eksen" }
     ]
   },
 
   "muhasebe": {
-    "aciklama": "Muhasebe sayfası: Giderler (sabit + değişken) ve Gelirler (müşteri satışları + tahmini). Net kar = ortalama gelir - toplam gider. Frontend aylık satışları sipariş verisinden tarih ile gruplar.",
+    "aciklama": "Muhasebe sayfası: Giderler (sabit + değişken) ve Gelirler (müşteri satışları + tahmini). Net kar = ortalama gelir - toplam gider. Frontend aylık satışları sipariş verisinden tarih ile gruplar. Gider Düzenle sayfası tek listede id, kalem, tutar, tip ile çalışır.",
     "endpoints": {
       "giderler_sabit": { "method": "GET", "path": "/api/muhasebe/giderler/sabit", "aciklama": "Aylık sabit gider kalemleri ve tutarları" },
       "giderler_degisken": { "method": "GET", "path": "/api/muhasebe/giderler/degisken", "aciklama": "Aylık değişken gider kalemleri (üretim maliyetleri)" },
+      "giderler_tek_liste": {
+        "liste": { "method": "GET", "path": "/api/muhasebe/giderler", "aciklama": "Tüm giderler tek listede (id, kalem, tutar, tip)" },
+        "ekle": { "method": "POST", "path": "/api/muhasebe/giderler" },
+        "guncelle": { "method": "PUT", "path": "/api/muhasebe/giderler/:id" },
+        "sil": { "method": "DELETE", "path": "/api/muhasebe/giderler/:id" }
+      },
       "gelirler_satislar": { "method": "GET", "path": "/api/muhasebe/gelirler/satislar", "aciklama": "Müşteri satışları (siparişlerden türetilebilir veya ayrı kayıt); aylık/müşteri bazlı" },
       "tahmini": { "method": "GET", "path": "/api/muhasebe/tahmini", "aciklama": "Beklenen üretim ve tahmini gelir" }
+    },
+    "gider_tek_liste_schema": {
+      "id": "number (benzersiz)",
+      "kalem": "string",
+      "tutar": "number (TRY/ay)",
+      "tip": "string: 'sabit' | 'degisken'"
+    },
+    "gider_ekle_guncelle_body": {
+      "kalem": "string (zorunlu)",
+      "tutar": "number (zorunlu, >= 0)",
+      "tip": "string (zorunlu): 'sabit' | 'degisken'"
     },
     "sabit_gider_schema": {
       "kalem": "string (Elektrik, İşçilik, SGK, Yol, Yemek, Bakım, Nakliye, Kira)",
@@ -335,6 +402,12 @@
     "ornek_degisken_giderler": [
       { "kalem": "Hammadde alımı", "tutar": 285000 },
       { "kalem": "Hurda kaybı", "tutar": 14200 }
+    ],
+    "ornek_gider_tek_liste": [
+      { "id": 1, "kalem": "Elektrik", "tutar": 18500, "tip": "sabit" },
+      { "id": 2, "kalem": "İşçilik", "tutar": 125000, "tip": "sabit" },
+      { "id": 9, "kalem": "Hammadde alımı", "tutar": 285000, "tip": "degisken" },
+      { "id": 10, "kalem": "Hurda kaybı", "tutar": 14200, "tip": "degisken" }
     ],
     "tahmini_schema": {
       "beklenenUretim": "string (örn: '28.500 birim')",

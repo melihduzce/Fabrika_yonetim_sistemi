@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Sparkles, TrendingDown, TrendingUp } from 'lucide-react';
+import { Sparkles, TrendingDown, TrendingUp, Pencil } from 'lucide-react';
 import { getThemeClasses } from 'utils/theme';
 import { MOCK_SIPARISLER, MOCK_MUSTERILER } from 'constants/siparisData';
 
@@ -33,24 +33,6 @@ const aylikSatislarFromSiparisler = (siparisler, musteriler) => {
     .sort((a, b) => (a.yil !== b.yil ? a.yil - b.yil : a.ay - b.ay));
 };
 
-// Sabit aylık giderler (₺/ay)
-const MOCK_SABIT_GIDERLER = [
-  { kalem: 'Elektrik', tutar: 18500 },
-  { kalem: 'İşçilik', tutar: 125000 },
-  { kalem: 'SGK', tutar: 32000 },
-  { kalem: 'Yol', tutar: 8400 },
-  { kalem: 'Yemek', tutar: 15600 },
-  { kalem: 'Bakım', tutar: 12000 },
-  { kalem: 'Nakliye', tutar: 22000 },
-  { kalem: 'Kira', tutar: 45000 },
-];
-
-// Değişken giderler (üretim maliyetleri, ₺/ay)
-const MOCK_DEGISKEN_GIDERLER = [
-  { kalem: 'Hammadde alımı', tutar: 285000 },
-  { kalem: 'Hurda kaybı', tutar: 14200 },
-];
-
 const MOCK_TAHMINI_AYLIK = {
   beklenenUretim: '28.500 birim',
   tahminiGelir: 445000,
@@ -65,12 +47,15 @@ const MOCK_AI_ANALIZ = [
   'Hurda kaybı oranı hedef aralıkta; iyileştirme için süreç gözden geçirilebilir.',
 ];
 
-const Muhasebe = ({ isDark }) => {
+const Muhasebe = ({ isDark, giderList = [], onMuhasebeDuzenle }) => {
   const { bgCard, textTitle, textSub, borderCol } = getThemeClasses(isDark);
   const [showAiPanel, setShowAiPanel] = useState(false);
 
-  const toplamSabit = MOCK_SABIT_GIDERLER.reduce((s, g) => s + g.tutar, 0);
-  const toplamDegisken = MOCK_DEGISKEN_GIDERLER.reduce((s, g) => s + g.tutar, 0);
+  const sabitGiderler = useMemo(() => giderList.filter((g) => g.tip === 'sabit'), [giderList]);
+  const degiskenGiderler = useMemo(() => giderList.filter((g) => g.tip === 'degisken'), [giderList]);
+
+  const toplamSabit = sabitGiderler.reduce((s, g) => s + g.tutar, 0);
+  const toplamDegisken = degiskenGiderler.reduce((s, g) => s + g.tutar, 0);
   const toplamGider = toplamSabit + toplamDegisken;
 
   const satislar = useMemo(() => aylikSatislarFromSiparisler(MOCK_SIPARISLER, MOCK_MUSTERILER), []);
@@ -83,7 +68,16 @@ const Muhasebe = ({ isDark }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap justify-end">
+      <div className="flex flex-wrap justify-end items-center gap-2">
+        {onMuhasebeDuzenle && (
+          <button
+            type="button"
+            onClick={onMuhasebeDuzenle}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+          >
+            <Pencil size={18} /> Düzenle
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setShowAiPanel((v) => !v)}
@@ -112,9 +106,9 @@ const Muhasebe = ({ isDark }) => {
           <div className="space-y-4">
             <h3 className={`text-sm font-semibold uppercase tracking-wider ${textSub}`}>{toTitleCase('Sabit aylık giderler')}</h3>
             <div className="space-y-2">
-              {MOCK_SABIT_GIDERLER.map((g) => (
+              {sabitGiderler.map((g) => (
                 <div
-                  key={g.kalem}
+                  key={g.id}
                   className={`flex justify-between items-center w-full px-4 py-3 rounded-lg border ${isDark ? 'bg-gray-700/40 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
                 >
                   <span className={`font-medium ${textTitle}`}>{g.kalem}</span>
@@ -129,9 +123,9 @@ const Muhasebe = ({ isDark }) => {
 
             <h3 className={`text-sm font-semibold uppercase tracking-wider mt-4 ${textSub}`}>{toTitleCase('Değişken giderler (üretim)')}</h3>
             <div className="space-y-2">
-              {MOCK_DEGISKEN_GIDERLER.map((g) => (
+              {degiskenGiderler.map((g) => (
                 <div
-                  key={g.kalem}
+                  key={g.id}
                   className={`flex justify-between items-center w-full px-4 py-3 rounded-lg border ${isDark ? 'bg-gray-700/40 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
                 >
                   <span className={`font-medium ${textTitle}`}>{g.kalem}</span>
