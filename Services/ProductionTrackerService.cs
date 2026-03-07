@@ -16,10 +16,8 @@ public class ProductionTrackerService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // 🛠️ KRİTİK EKLEME: 
-        // Server yeni açıldığında Program.cs'deki EnsureCreated işleminin 
-        // tamamlanması için servisi 5 saniye uyutuyoruz.
-        _logger.LogInformation("Fabrika motorları ısınıyor, veritabanı bekleniyor...");
+        // 🚀 ÇÖZÜM 1: Program.cs'nin tabloyu oluşturması için 5 saniye bekle
+        _logger.LogInformation("Fabrika motorları ısınıyor, 5 saniye bekleniyor...");
         await Task.Delay(5000, stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
@@ -30,41 +28,30 @@ public class ProductionTrackerService : BackgroundService
                 {
                     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                    // 🛠️ EKSTRA KONTROL: Veritabanı veya tablo henüz hazır değilse hata verme, döngüye devam et.
-                    if (!await context.Database.CanConnectAsync(stoppingToken))
-                    {
-                        _logger.LogWarning("Veritabanı henüz hazır değil, tekrar deneniyor...");
-                        await Task.Delay(5000, stoppingToken);
-                        continue;
-                    }
+                    _logger.LogInformation("Üretim hattı kontrol ediliyor...");
 
-                    _logger.LogInformation("Fabrika üretim hattı kontrol ediliyor... {time}", DateTimeOffset.Now);
-
-                    // 1. Üretimi devam eden siparişleri bul
+                    // 🚀 ÇÖZÜM 2: Burada Orders tablosu yoksa catch bloğuna düşer ve uygulama ÇÖKMEZ
                     var activeOrders = await context.Orders
                         .Where(o => o.Status == "Producing")
                         .ToListAsync(stoppingToken);
 
                     foreach (var order in activeOrders)
                     {
-                        // 5 saniye sonra otomatik tamamlama testi (Senin kurgun)
                         if (DateTime.UtcNow >= order.CreatedAt.AddSeconds(5)) 
                         {
-                            _logger.LogInformation("Sipariş {id} üretimi tamamlandı! Stok güncelleniyor...", order.Id);
+                            _logger.LogInformation("Sipariş {id} tamamlandı!", order.Id);
                             order.Status = "Completed"; 
                         }
                     }
-
                     await context.SaveChangesAsync(stoppingToken);
                 }
             }
             catch (Exception ex)
             {
-                // Tablo bulunamadı hatası gelirse burada yakalayıp logluyoruz, uygulama çökmüyor.
-                _logger.LogError("Üretim hattında bir aksama oldu: {message}", ex.Message);
+                // Uygulamanın kapanmasını engelleyen zırh
+                _logger.LogWarning("Veritabanı henüz hazır değil veya tablo eksik. 30 sn sonra tekrar denenecek.");
             }
 
-            // 30 saniyede bir kontrol et
             await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
         }
     }
