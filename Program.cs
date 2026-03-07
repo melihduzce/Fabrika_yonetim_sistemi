@@ -41,4 +41,20 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
+// Veritabanını otomatik oluşturma/güncelleme bloğu
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>(); // Senin DbContext adın neyse o
+        context.Database.EnsureCreated(); // Eğer tablolar yoksa oluşturur
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Veritabanı tabloları oluşturulurken hata oluştu.");
+    }
+}
+
 app.Run();
