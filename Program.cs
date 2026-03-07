@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. VERİTABANI BAĞLANTISI (SQLite)
+// 1. VERİTABANI BAĞLANTISI
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -19,7 +19,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 4. CORS AYARI (Frontend için kapıyı açar)
+// 4. CORS (DIŞARIDAN ERİŞİM İZNİ)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("HerkesGelsin", policyBuilder =>
@@ -28,21 +28,19 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 5. OTONOM TAKİP SERVİSİ (ExecuteAsync içeren servisimiz)
+// 5. OTONOM TAKİP SERVİSİ
 builder.Services.AddHostedService<ProductionTrackerService>();
 
 var app = builder.Build();
 
-
-// --- 🛠️ REVİZE BÖLGESİ: VERİTABANINI HER ŞEYDEN ÖNCE GARANTİYE AL ---
-// Bu blok, uygulama nefes almadan tabloları fiziksel olarak oluşturur.
+// --- 🛠️ KRİTİK BÖLGE: VERİTABANINI GARANTİYE AL ---
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<AppDbContext>();
-        // Bu komut tabloların (Orders vb.) kesin olarak var olmasını sağlar.
+        // Tabloyu (Orders) fiziksel olarak diske mühürler.
         context.Database.EnsureCreated(); 
         Console.WriteLine("--> [BAŞARILI] Veritabanı ve Tablolar ayağa kaldırıldı.");
     }
@@ -53,16 +51,15 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// 7. SWAGGER AYARI (Railway'de gözükmesi için her zaman aktif)
+// 6. SWAGGER VE MIDDLEWARE (Her ortamda Swagger açık!)
 app.UseSwagger();
 app.UseSwaggerUI(c => {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Fabrika API V1");
-    c.RoutePrefix = string.Empty; // Ana sayfada direkt Swagger açılır.
+    c.RoutePrefix = string.Empty; // URL'ye tıklandığında direkt Swagger açılır.
 });
 
-// 8. MIDDLEWARE SIRALAMASI
 app.UseCors("HerkesGelsin"); 
 app.UseAuthorization();
 app.MapControllers();
 
-app.Run(); // Fabrika yayına giriyor!
+app.Run(); // Fabrika motoru çalışıyor!
