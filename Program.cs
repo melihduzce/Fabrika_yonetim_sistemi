@@ -1,5 +1,6 @@
 using FabrikaBackend.Data;
 using Microsoft.EntityFrameworkCore;
+using FabrikaBackend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,8 @@ builder.Services.AddControllers()
     .AddJsonOptions(options => 
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
         
+// PYTHON AI MOTORU İLE HABERLEŞMEK İÇİN TELEFON HATTI EKLENDİ
+builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -21,7 +24,8 @@ builder.Services.AddCors(options =>
         policyBuilder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
     });
 });
-
+builder.Services.AddHttpClient(); // Python ile konuşmamızı sağlayan hayati hat
+builder.Services.AddHostedService<ProductionTrackerService>();
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

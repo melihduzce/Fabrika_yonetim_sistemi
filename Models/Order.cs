@@ -1,29 +1,33 @@
+using System;
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization; // JSON çevirmenleri için alet çantamızı ekledik!
+using System.Text.Json.Serialization;
 
 namespace FabrikaBackend.Models;
 
 public class Order
 {
     [Key]
-    [JsonPropertyName("no")]
-    public string No { get; set; } = string.Empty; // Örn: SIP-2026-001
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
 
-    [JsonPropertyName("musteriId")]
-    public string MusteriId { get; set; } = string.Empty;
+    [JsonPropertyName("product_id")]
+    public int ProductId { get; set; }
 
-    [JsonPropertyName("urunId")]
-    public string UrunId { get; set; } = string.Empty;
+    [JsonPropertyName("quantity")]
+    public int Quantity { get; set; }
 
-    [JsonPropertyName("miktar")]
-    public double Miktar { get; set; }
+    [JsonPropertyName("estimated_hour")]
+    public double EstimatedDays { get; set; }
 
-    [JsonPropertyName("birimFiyat")]
-    public decimal BirimFiyat { get; set; }
+    [JsonPropertyName("total_cost")]    
+    public double TotalCost { get; set; }
 
-    [JsonPropertyName("tarih")]
-    public string Tarih { get; set; } = string.Empty; 
+    [JsonPropertyName("sale_price")]
+    public double SalePrice { get; set; }
 
-    [JsonPropertyName("durum")]
-    public string Durum { get; set; } = string.Empty; // Beklemede, Onaylandı vs.
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = "pending";
+
+    [JsonPropertyName("created_at")]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

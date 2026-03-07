@@ -5,22 +5,14 @@ namespace FabrikaBackend.Models;
 
 public class Machine
 {
-    [Key] 
-    [JsonPropertyName("id")]
-    public int Id { get; set; }
+    [Key]
+    public int Id { get; set; } // Veritabanı için gizli kimlik
 
-    [JsonPropertyName("ad")]
-    public string Name { get; set; } = string.Empty;
+    public int ProductId { get; set; } // Bu makine hangi ürüne ait?
 
-    // Detay kısmını kökten uçurduk! Sadece sistemin çalışması için Durum kaldı.
-    [JsonPropertyName("durum")]
-    public MachineStatus Status { get; set; }
-}
+    [JsonPropertyName("machine_name")]
+    public string MachineName { get; set; } = string.Empty;
 
-[JsonConverter(typeof(JsonStringEnumConverter))]
-public enum MachineStatus
-{
-    Calisiyor,
-    Durmus,
-    Arizali
+    [JsonPropertyName("is_used")]
+    public bool IsUsed { get; set; }
 }

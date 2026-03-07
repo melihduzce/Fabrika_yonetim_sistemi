@@ -2,70 +2,136 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FabrikaBackend.Data;
 using FabrikaBackend.Models;
+using System.Net.Http.Json; // Python'a JSON göndermek için şart!
 
 namespace FabrikaBackend.Controllers;
 
 public class OrderCreateRequest
 {
-    public string MusteriId { get; set; } = string.Empty;
-    public string UrunId { get; set; } = string.Empty;
-    public double Miktar { get; set; }
+    public int ProductId { get; set; }
+    public int Quantity { get; set; }
 }
 
-[Route("api/siparisler")]
+// YENİ: Sadece durumu güncellemek için özel model
+public class OrderStatusUpdateRequest
+{
+    public string Status { get; set; } = string.Empty;
+}
+
+[Route("api/orders")]
 [ApiController]
 public class OrderController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly HttpClient _httpClient; 
 
-    public OrderController(AppDbContext context)
+    public OrderController(AppDbContext context, HttpClient httpClient)
     {
         _context = context;
+        _httpClient = httpClient;
     }
 
+    // FİLTRELİ GET METODU (Örn: ?status=pending)
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
+    public async Task<ActionResult<IEnumerable<Order>>> GetOrders([FromQuery] string? status)
     {
-        return await _context.Orders.ToListAsync();
+        var query = _context.Orders.AsQueryable();
+        
+        if (!string.IsNullOrEmpty(status))
+        {
+            query = query.Where(o => o.Status == status);
+        }
+        
+        return await query.ToListAsync();
     }
 
-    // YENİ: Tekil Sipariş Getirme
+    // TEKİL GET METODU
     [HttpGet("{id}")]
-    public async Task<ActionResult<Order>> GetOrder(string id)
+    public async Task<ActionResult<Order>> GetOrder(int id)
     {
         var order = await _context.Orders.FindAsync(id);
-        if (order == null) return NotFound("Sipariş bulunamadı.");
+        if (order == null) return NotFound("Order not found.");
         return order;
     }
 
     [HttpPost]
     public async Task<ActionResult<Order>> CreateOrder(OrderCreateRequest request)
     {
-        var urun = await _context.Products.FindAsync(request.UrunId);
-        if (urun == null) return NotFound("Hata: Ürün bulunamadı!");
+        var product = await _context.Products.FindAsync(request.ProductId);
+        if (product == null) return NotFound("Error: Product not found!");
 
-        var yeniSiparis = new Order
+        // 1. SÜRE HESAPLAMA MANTIĞI
+        double netDailyCapacity = product.GunlukUretim * 0.85;
+        double estimatedDays = request.Quantity / netDailyCapacity;
+        if (product.HasHeatTreatment) estimatedDays += 1;
+
+        var newOrder = new Order
         {
-            No = "SIP-" + DateTime.Now.Year + "-" + new Random().Next(1000, 9999),
-            MusteriId = request.MusteriId,
-            UrunId = request.UrunId,
-            Miktar = request.Miktar,
-            BirimFiyat = urun.Price, 
-            Tarih = DateTime.Now.ToString("dd.MM.yyyy"), 
-            Durum = "Beklemede" 
+            ProductId = request.ProductId,
+            Quantity = request.Quantity,
+            EstimatedDays = Math.Round(estimatedDays, 2),
+            TotalCost = product.BaseCost * request.Quantity,
+            SalePrice = (product.BaseCost * request.Quantity) * 1.5,
+            Status = "pending", // Yeni siparişler varsayılan olarak bekliyor
+            CreatedAt = DateTime.UtcNow
         };
 
-        _context.Orders.Add(yeniSiparis);
+        _context.Orders.Add(newOrder);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetOrder), new { id = yeniSiparis.No }, yeniSiparis);
+        // --- 🤖 AI TETİKLEYİCİSİ (EVENT-DRIVEN) ---
+        double capacityUtilization = (request.Quantity / product.MonthlyCapacity) * 100;
+        bool isCriticalOrder = request.Quantity > (product.MonthlyCapacity * 0.20);
+
+        if (capacityUtilization > 85 || isCriticalOrder)
+        {
+            try 
+            {
+                var aiRequest = new { mode = "risk_analysis" };
+                var response = await _httpClient.PostAsJsonAsync("http://127.0.0.1:8000/api/ai/analyze", aiRequest);
+                
+                if(response.IsSuccessStatusCode)
+                {
+                    var aiResult = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine("\n🚨 [AI RİSK ANALİZİ DEVREYE GİRDİ] 🚨");
+                    Console.WriteLine(aiResult);
+                    Console.WriteLine("------------------------------------\n");
+                }
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("\n⚠️ [UYARI]: AI Tetiklendi ama Python sunucusu (FastAPI) şu an kapalı veya ulaşılamıyor.\n");
+            }
+        }
+
+        return CreatedAtAction(nameof(GetOrder), new { id = newOrder.Id }, newOrder);
     }
 
-    // YENİ: Sipariş Güncelleme (Örn: Durumu "Üretimde" veya "Sevk Edildi" yapmak için)
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateOrder(string id, Order order)
+    // YENİ: SADECE SİPARİŞ DURUMU GÜNCELLEME (PATCH)
+    [HttpPatch("{id}/status")]
+    public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] OrderStatusUpdateRequest request)
     {
-        if (id != order.No) return BadRequest("Girdiğiniz ID ile Sipariş No uyuşmuyor!");
+        var order = await _context.Orders.FindAsync(id);
+        if (order == null) return NotFound("Order not found.");
+
+        // İzin verilen durumlar
+        var allowedStatuses = new[] { "pending", "in_production", "completed", "cancelled" };
+        if (!allowedStatuses.Contains(request.Status))
+        {
+            return BadRequest("Invalid status. Allowed values: pending, in_production, completed, cancelled");
+        }
+
+        order.Status = request.Status;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Status updated successfully", new_status = order.Status });
+    }
+
+    // TÜM SİPARİŞİ GÜNCELLEME (PUT)
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateOrder(int id, Order order)
+    {
+        if (id != order.Id) return BadRequest("ID mismatch!");
 
         _context.Entry(order).State = EntityState.Modified;
 
@@ -75,23 +141,23 @@ public class OrderController : ControllerBase
         }
         catch (DbUpdateConcurrencyException)
         {
-            if (!_context.Orders.Any(e => e.No == id)) return NotFound("Güncellenecek sipariş bulunamadı.");
+            if (!_context.Orders.Any(e => e.Id == id)) return NotFound("Order to update not found.");
             else throw;
         }
 
         return NoContent();
     }
 
-    // YENİ: Sipariş İptal Etme / Silme
+    // SİPARİŞ SİLME (DELETE)
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteOrder(string id)
+    public async Task<IActionResult> DeleteOrder(int id)
     {
         var order = await _context.Orders.FindAsync(id);
-        if (order == null) return NotFound("Silinecek sipariş bulunamadı.");
+        if (order == null) return NotFound("Order to delete not found.");
 
         _context.Orders.Remove(order);
         await _context.SaveChangesAsync();
 
         return NoContent();
     }
-} 
+}

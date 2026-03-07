@@ -1,34 +1,63 @@
-using System.Text.Json.Serialization; // Çevirmen kütüphanemiz
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace FabrikaBackend.Models;
 
 public class Product
 {
-    // 1. DİKKAT: Frontend Id'yi "UR-001" şeklinde beklediği için string yaptık!
+    [Key]
     [JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
+    public int Id { get; set; }
 
-    [JsonPropertyName("ad")]
-    public string Name { get; set; } = string.Empty;
+    [JsonPropertyName("urun_kodu")]
+    public string UrunKodu { get; set; } = string.Empty;
 
-    // Front-end'in istediği yeni özellikler:
-    [JsonPropertyName("birim")]
-    public string Unit { get; set; } = string.Empty; // Adet, kg, Lt
+    [JsonPropertyName("ham_madde")]
+    public string HamMadde { get; set; } = string.Empty;
 
-    [JsonPropertyName("birimFiyat")]
-    public decimal Price { get; set; } // Senin orijinal Price'ı buraya bağladık
+    [JsonPropertyName("malzeme_tipi")]
+    public string MalzemeTipi { get; set; } = string.Empty;
 
-    [JsonPropertyName("birimMaliyet")]
-    public decimal UnitCost { get; set; }
+    [JsonPropertyName("pres_kategorisi")]
+    public string PresKategorisi { get; set; } = string.Empty;
 
-    [JsonPropertyName("birimSure")]
-    public double UnitTime { get; set; } // saat/birim
+    [JsonPropertyName("gunluk_uretim")]
+    public int GunlukUretim { get; set; }
 
-    [JsonPropertyName("gunlukUretim")]
-    public double DailyProduction { get; set; } // birim/gün
+    [NotMapped]
+    [JsonPropertyName("net_daily_capacity")]
+    public double NetDailyCapacity => GunlukUretim * 0.85; 
 
-    // Senin orijinal kodundaki Stok Miktarı! 
-    // Frontend bu listede istememiş ama silmiyoruz, veritabanımızda aslanlar gibi dursun.
-    [JsonPropertyName("stokMiktari")]
-    public int StockQuantity { get; set; }
+    [NotMapped]
+    [JsonPropertyName("monthly_capacity")]
+    public double MonthlyCapacity => NetDailyCapacity * 22;
+
+    [JsonPropertyName("brut_agirlik_kg")]
+    public double BrutAgirlikKg { get; set; }
+
+    [JsonPropertyName("net_agirlik_kg")]
+    public double NetAgirlikKg { get; set; }
+
+    [JsonPropertyName("hurda_orani")]
+    public double HurdaOrani { get; set; }
+
+    [JsonPropertyName("malzeme_verimi")]
+    public double MalzemeVerimi { get; set; }
+
+    [JsonPropertyName("calisan_sayisi")]
+    public int CalisanSayisi { get; set; }
+
+    [JsonPropertyName("has_heat_treatment")]
+    public bool HasHeatTreatment { get; set; }
+
+    [JsonPropertyName("base_cost")]
+    public double BaseCost { get; set; }
+
+    [JsonPropertyName("machines")]
+    public List<Machine> Machines { get; set; } = new List<Machine>();
+    
+    [JsonPropertyName("current_stock")]
+    public int CurrentStock { get; set; } = 0; 
 }
