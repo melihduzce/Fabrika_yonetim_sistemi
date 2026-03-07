@@ -1,0 +1,22 @@
+# 1. Derleme Aşaması
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Sadece proje dosyasını kopyala ve bağımlılıkları yükle
+COPY *.csproj ./
+RUN dotnet restore
+
+# Kalan tüm dosyaları kopyala ve derle
+COPY . .
+RUN dotnet publish -c Release -o /app/publish
+
+# 2. Çalıştırma Aşaması
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
+WORKDIR /app
+COPY --from=build /app/publish .
+
+# Render'ın beklediği port ayarı
+ENV ASPNETCORE_URLS=http://+:10000
+EXPOSE 10000
+
+ENTRYPOINT ["dotnet", "FabrikaBackend.dll"]
