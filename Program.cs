@@ -33,6 +33,7 @@ builder.Services.AddHostedService<ProductionTrackerService>();
 
 var app = builder.Build();
 
+
 // --- 🛠️ REVİZE BÖLGESİ: VERİTABANINI HER ŞEYDEN ÖNCE GARANTİYE AL ---
 // Bu blok, uygulama nefes almadan tabloları fiziksel olarak oluşturur.
 using (var scope = app.Services.CreateScope())

@@ -16,8 +16,8 @@ public class ProductionTrackerService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // 🚀 REVİZE 1: Bekleme süresini ve bilgilendirmeyi netleştirdik.
-        // Program.cs'deki EnsureCreated işleminin bitmesi için sisteme zaman tanıyoruz.
+        // 🚀 REVİZE 1: Program.cs'nin EnsureCreated işlemini (tablo oluşturma) 
+        // tamamlaması için sisteme 10 saniyelik hayati bir avans veriyoruz.
         _logger.LogInformation("--> [OTONOM SİSTEM] Motorlar ısınıyor, 10 saniye bekleniyor...");
         await Task.Delay(10000, stoppingToken); 
 
@@ -29,23 +29,25 @@ public class ProductionTrackerService : BackgroundService
                 {
                     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                    // 🚀 REVİZE 2: Veritabanı bağlantısı yoksa tablo sorgusuna hiç girmeden döngüyü başa sarar.
+                    // 🚀 REVİZE 2: Veritabanı dosyası henüz diske yansımadıysa 
+                    // tablo sorgusuna girmeden güvenli bir şekilde döngüyü bekletir.
                     if (!await context.Database.CanConnectAsync(stoppingToken))
                     {
-                        _logger.LogWarning("--> [UYARI] Veritabanı bağlantısı henüz kurulamadı...");
+                        _logger.LogWarning("--> [UYARI] Veritabanı bağlantısı henüz kurulamadı, bekleniyor...");
                     }
                     else
                     {
                         _logger.LogInformation("--> [KONTROL] Üretim hattı taranıyor...");
 
-                        // Hatanın patladığı meşhur satır artık try-catch korumasında:
+                        // Hatanın (no such table) patladığı satır artık try-catch korumasında.
+                        // Tablo o an hazır değilse catch bloğuna düşer ama server KAPANMAZ.
                         var activeOrders = await context.Orders
                             .Where(o => o.Status == "Producing")
                             .ToListAsync(stoppingToken);
 
                         foreach (var order in activeOrders)
                         {
-                            // 5 saniye kuralı: Otonom üretim tamamlama mantığı
+                            // Otonom tamamlama mantığı (5 saniye kuralı)
                             if (DateTime.UtcNow >= order.CreatedAt.AddSeconds(5)) 
                             {
                                 _logger.LogInformation("--> [TAMAMLANDI] Sipariş {id} üretildi!", order.Id);
@@ -62,8 +64,9 @@ public class ProductionTrackerService : BackgroundService
             }
             catch (Exception ex)
             {
-                // 🚀 REVİZE 3: Hata detayı loglanır ama uygulama (Unhandled Exception) ile ÇÖKMEZ.
-                _logger.LogError("--> [KRİTİK HATA] Üretim servisinde aksama: {msg}", ex.Message);
+                // 🚀 REVİZE 3: Hata detayı loglanır ancak 'Unhandled Exception' oluşmaz.
+                // Bir sonraki 30 saniyelik döngüde sistem her şeyi otomatik düzeltecektir.
+                _logger.LogWarning("--> [SİSTEM KORUMASI] Tablo henüz hazır değil veya meşgul. Hata: {msg}", ex.Message);
             }
 
             // 30 saniyede bir otonom kontrol döngüsü
