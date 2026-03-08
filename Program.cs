@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // 1. VERİTABANI BAĞLANTISI
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // 2. JSON VE ENUM AYARLARI
 builder.Services.AddControllers()
