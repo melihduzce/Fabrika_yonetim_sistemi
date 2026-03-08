@@ -24,7 +24,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("HerkesGelsin", policyBuilder =>
     {
-        policyBuilder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        policyBuilder
+            .SetIsOriginAllowed(origin => true)
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
@@ -40,8 +44,8 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<AppDbContext>();
-        // Tabloyu (Orders) fiziksel olarak diske mühürler.
-        context.Database.EnsureCreated(); 
+        // Migration'ları uygula (güvenli yöntem)
+        context.Database.Migrate(); 
         Console.WriteLine("--> [BAŞARILI] Veritabanı ve Tablolar ayağa kaldırıldı.");
     }
     catch (Exception ex)

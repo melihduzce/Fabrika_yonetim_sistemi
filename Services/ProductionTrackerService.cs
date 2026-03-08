@@ -67,4 +67,4 @@ public class ProductionTrackerService : BackgroundService
             await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
         }
     }
-}
+}   
