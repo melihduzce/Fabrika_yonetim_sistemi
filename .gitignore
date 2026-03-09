@@ -341,7 +341,7 @@ __pycache__/
 *.tss
 
 # Telerik's JustMock configuration file
-*.jmconfig
+*.jmconfig  
 
 # BizTalk build output
 *.btp.cs
@@ -482,3 +482,9 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+
+# SQLite Databases
+*.db
+*.db-shm
+*.db-wal

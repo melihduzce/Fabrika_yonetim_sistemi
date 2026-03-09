@@ -2,68 +2,112 @@ using FabrikaBackend.Data;
 using Microsoft.EntityFrameworkCore;
 using FabrikaBackend.Services;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. VERİTABANI BAĞLANTISI
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+// --- 1. VERİTABANI BAĞLANTISI (OTOMATİK SEÇİM & FORMAT DÖNÜŞTÜRME) ---
+var rawConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+string? connectionString;
 
-// 2. JSON VE ENUM AYARLARI
+if (!string.IsNullOrEmpty(rawConnectionString) && rawConnectionString.StartsWith("postgres://"))
+{
+    // Railway'in "postgres://" formatını Npgsql'in anlayacağı "Host=..." formatına çeviriyoruz
+    var databaseUri = new Uri(rawConnectionString);
+    var userInfo = databaseUri.UserInfo.Split(':');
+    
+    connectionString = $"Host={databaseUri.Host};Port={databaseUri.Port};Database={databaseUri.LocalPath.Substring(1)};" +
+                       $"Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+}
+else
+{
+    // Yereldeysen appsettings.json'daki SqliteConnection'ı kullan
+    connectionString = rawConnectionString ?? builder.Configuration.GetConnectionString("SqliteConnection") ?? "Data Source=fabrika.db";
+}
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    if (connectionString.Contains("Host="))
+    {
+        options.UseNpgsql(connectionString);
+    }
+    else
+    {
+        options.UseSqlite(connectionString);
+    }
+});
+
+// --- 2. AUTHENTICATION & JWT YAPILANDIRMASI ---
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "CokGizliAnahtar123!"))
+        };
+    });
+
+// --- 3. JSON VE ENUM AYARLARI ---
 builder.Services.AddControllers()
     .AddJsonOptions(options => 
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-// 3. TELEFON HATTI VE SWAGGER
 builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 4. CORS (DIŞARIDAN ERİŞİM İZNİ)
+// --- 4. CORS ---
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("HerkesGelsin", policyBuilder =>
     {
         policyBuilder
-            .SetIsOriginAllowed(origin => true)
+            .AllowAnyOrigin()
             .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials();
+            .AllowAnyHeader();
     });
 });
 
-// 5. OTONOM TAKİP SERVİSİ
+// --- 5. OTONOM TAKİP SERVİSİ ---
 builder.Services.AddHostedService<ProductionTrackerService>();
 
 var app = builder.Build();
 
-// --- 🛠️ KRİTİK BÖLGE: VERİTABANINI GARANTİYE AL ---
+// --- 🛠️ VERİTABANI OTOMASYONU ---
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<AppDbContext>();
-        // Migration'ları uygula (güvenli yöntem)
+        // Railway'de PostgreSQL tablolarını otomatik oluşturur
         context.Database.Migrate(); 
-        Console.WriteLine("--> [BAŞARILI] Veritabanı ve Tablolar ayağa kaldırıldı.");
+        Console.WriteLine("--> [BAŞARILI] Veritabanı ve Tablolar hazır.");
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "--> [HATA] Veritabanı oluşturulurken bir sorun çıktı!");
+        Console.WriteLine($"--> [HATA] Veritabanı hazırlığı sırasında hata: {ex.Message}");
     }
 }
 
-// 6. SWAGGER VE MIDDLEWARE (Her ortamda Swagger açık!)
+// --- 6. MIDDLEWARE SIRALAMASI ---
 app.UseSwagger();
 app.UseSwaggerUI(c => {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Fabrika API V1");
-    c.RoutePrefix = string.Empty; // URL'ye tıklandığında direkt Swagger açılır.
+    c.RoutePrefix = string.Empty; 
 });
 
 app.UseCors("HerkesGelsin"); 
+app.UseAuthentication(); 
 app.UseAuthorization();
 app.MapControllers();
 
-app.Run(); // Fabrika motoru çalışıyor!
+app.Run();
