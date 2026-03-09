@@ -90,13 +90,34 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<AppDbContext>();
-        // Railway'de PostgreSQL tablolarını otomatik oluşturur
-        context.Database.Migrate(); 
-        Console.WriteLine("--> [BAŞARILI] Veritabanı ve Tablolar hazır.");
+        
+        // Veritabanı bağlantısını test et
+        if (await context.Database.CanConnectAsync())
+        {
+            Console.WriteLine("--> [DB] Veritabanı bağlantısı başarılı.");
+            
+            // Migration'ları uygula
+            var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+            if (pendingMigrations.Any())
+            {
+                Console.WriteLine($"--> [MIGRATION] {pendingMigrations.Count()} migration uygulanıyor...");
+                await context.Database.MigrateAsync();
+                Console.WriteLine("--> [BAŞARILI] Tüm migration'lar uygulandı.");
+            }
+            else
+            {
+                Console.WriteLine("--> [DB] Bekleyen migration yok, tüm tablolar hazır.");
+            }
+        }
+        else
+        {
+            Console.WriteLine("--> [HATA] Veritabanı bağlantısı kurulamadı!");
+        }
     }
     catch (Exception ex)
     {
         Console.WriteLine($"--> [HATA] Veritabanı hazırlığı sırasında hata: {ex.Message}");
+        Console.WriteLine($"--> [DETAY] {ex.InnerException?.Message}");
     }
 }
 
