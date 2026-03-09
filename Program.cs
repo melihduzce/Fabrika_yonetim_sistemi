@@ -12,19 +12,21 @@ var builder = WebApplication.CreateBuilder(args);
 var rawConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
 string? connectionString;
 
-if (!string.IsNullOrEmpty(rawConnectionString) && rawConnectionString.StartsWith("postgres://"))
+if (!string.IsNullOrEmpty(rawConnectionString) && (rawConnectionString.StartsWith("postgres://") || rawConnectionString.StartsWith("postgresql://")))
 {
-    // Railway'in "postgres://" formatını Npgsql'in anlayacağı "Host=..." formatına çeviriyoruz
+    // Railway'in "postgres://" veya "postgresql://" formatını Npgsql'in anlayacağı "Host=..." formatına çeviriyoruz
     var databaseUri = new Uri(rawConnectionString);
     var userInfo = databaseUri.UserInfo.Split(':');
     
     connectionString = $"Host={databaseUri.Host};Port={databaseUri.Port};Database={databaseUri.LocalPath.Substring(1)};" +
                        $"Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+    Console.WriteLine($"--> [DB] PostgreSQL bağlantısı kullanılıyor: {connectionString.Replace(userInfo[1], "***")}");
 }
 else
 {
     // Yereldeysen appsettings.json'daki SqliteConnection'ı kullan
     connectionString = rawConnectionString ?? builder.Configuration.GetConnectionString("SqliteConnection") ?? "Data Source=fabrika.db";
+    Console.WriteLine($"--> [DB] SQLite bağlantısı kullanılıyor: {connectionString}");
 }
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -77,7 +79,7 @@ builder.Services.AddCors(options =>
 });
 
 // --- 5. OTONOM TAKİP SERVİSİ ---
-builder.Services.AddHostedService<ProductionTrackerService>();
+// builder.Services.AddHostedService<ProductionTrackerService>(); // Tetikleyici mantık kaldırıldı
 
 var app = builder.Build();
 
