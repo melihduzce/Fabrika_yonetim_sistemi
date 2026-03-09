@@ -91,28 +91,9 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<AppDbContext>();
         
-        // Veritabanı bağlantısını test et
-        if (await context.Database.CanConnectAsync())
-        {
-            Console.WriteLine("--> [DB] Veritabanı bağlantısı başarılı.");
-            
-            // Migration'ları uygula
-            var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
-            if (pendingMigrations.Any())
-            {
-                Console.WriteLine($"--> [MIGRATION] {pendingMigrations.Count()} migration uygulanıyor...");
-                await context.Database.MigrateAsync();
-                Console.WriteLine("--> [BAŞARILI] Tüm migration'lar uygulandı.");
-            }
-            else
-            {
-                Console.WriteLine("--> [DB] Bekleyen migration yok, tüm tablolar hazır.");
-            }
-        }
-        else
-        {
-            Console.WriteLine("--> [HATA] Veritabanı bağlantısı kurulamadı!");
-        }
+        Console.WriteLine("--> [DB] Migration'lar uygulanıyor...");
+        context.Database.Migrate();
+        Console.WriteLine("--> [BAŞARILI] Tüm migration'lar uygulandı ve tablolar oluşturuldu.");
     }
     catch (Exception ex)
     {
