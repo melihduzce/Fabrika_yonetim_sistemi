@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Sparkles, TrendingDown, TrendingUp, Pencil } from 'lucide-react';
+import { Sparkles, TrendingDown, TrendingUp, Pencil, RefreshCw } from 'lucide-react';
 import { getThemeClasses } from 'utils/theme';
 import { MOCK_SIPARISLER, MOCK_MUSTERILER } from 'constants/siparisData';
 
@@ -14,7 +14,7 @@ const aylikSatislarFromSiparisler = (siparisler, musteriler) => {
   const byMonth = {};
   siparisler.forEach((s) => {
     const tutar = s.miktar * (s.birimFiyat ?? 0);
-    const [gun, ay, yil] = (s.tarih || '').split('.');
+    const [, ay, yil] = (s.tarih || '').split('.');
     if (!ay || !yil) return;
     const key = `${ay}.${yil}`;
     if (!byMonth[key]) byMonth[key] = { ay: parseInt(ay, 10) - 1, yil, toplam: 0, byMusteri: {} };
@@ -47,7 +47,7 @@ const MOCK_AI_ANALIZ = [
   'Hurda kaybı oranı hedef aralıkta; iyileştirme için süreç gözden geçirilebilir.',
 ];
 
-const Muhasebe = ({ isDark, giderList = [], onMuhasebeDuzenle }) => {
+const Muhasebe = ({ isDark, giderList = [], onRefresh, onMuhasebeDuzenle }) => {
   const { bgCard, textTitle, textSub, borderCol } = getThemeClasses(isDark);
   const [showAiPanel, setShowAiPanel] = useState(false);
 
@@ -69,6 +69,16 @@ const Muhasebe = ({ isDark, giderList = [], onMuhasebeDuzenle }) => {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap justify-end items-center gap-2">
+        {onRefresh && (
+          <button
+            type="button"
+            onClick={onRefresh}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold border transition-colors ${isDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+            title="Gider listesini yenile"
+          >
+            <RefreshCw size={18} /> Yenile
+          </button>
+        )}
         {onMuhasebeDuzenle && (
           <button
             type="button"

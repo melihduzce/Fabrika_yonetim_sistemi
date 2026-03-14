@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, ShoppingCart } from 'lucide-react';
 import { getThemeClasses } from 'utils/theme';
 import ThemeDropdown from 'components/ThemeDropdown';
 import { useToast } from 'contexts/ToastContext';
 import NumberStepperInput from 'components/NumberStepperInput';
-import { MOCK_SIPARISLER, MOCK_MUSTERILER, MOCK_URUNLER } from 'constants/siparisData';
+import { getUrunler, getSiparisler, createSiparis } from 'services';
 
 /** Miktar ve günlük üretim kapasitesine göre tahmini üretim süresi (gün/saat metni) */
 const tahminiUretimSuresiMetin = (miktar, gunlukUretim) => {
@@ -29,15 +29,40 @@ const durumRenk = (durum, isDark) => {
   return map[durum] ?? map.Beklemede;
 };
 
-const SiparisOlustur = ({ isDark }) => {
+const SiparisOlustur = ({ isDark, musteriList = [], onRefreshMusteri }) => {
   const { toast } = useToast();
   const { bgCard, textTitle, textSub } = getThemeClasses(isDark);
-  const [seciliMusteri, setSeciliMusteri] = useState(MOCK_MUSTERILER[0]?.id ?? '');
-  const [seciliUrun, setSeciliUrun] = useState(MOCK_URUNLER[0]?.id ?? '');
+  const [urunler, setUrunler] = useState([]);
+  const [siparisler, setSiparisler] = useState([]);
+  const [seciliMusteri, setSeciliMusteri] = useState('');
+  const [seciliUrun, setSeciliUrun] = useState('');
   const [miktar, setMiktar] = useState(10);
+  const [submitting, setSubmitting] = useState(false);
 
-  const musteri = MOCK_MUSTERILER.find((m) => m.id === seciliMusteri);
-  const urun = MOCK_URUNLER.find((u) => u.id === seciliUrun);
+  const musterilerDropdown = useMemo(
+    () =>
+      musteriList.map((m) => ({
+        id: m.idKod ?? m.id,
+        unvan: m.unvan || `${m.ad} ${m.soyad}`.trim(),
+        yetkili: `${m.ad} ${m.soyad}`.trim(),
+        tel: m.telefon || '',
+      })),
+    [musteriList]
+  );
+
+  useEffect(() => {
+    getUrunler().then(setUrunler).catch(() => setUrunler([]));
+    getSiparisler().then(setSiparisler).catch(() => setSiparisler([]));
+  }, []);
+
+  useEffect(() => {
+    if (musterilerDropdown.length && !seciliMusteri) setSeciliMusteri(musterilerDropdown[0].id);
+  }, [musterilerDropdown, seciliMusteri]);
+  useEffect(() => {
+    if (urunler.length && seciliUrun === '') setSeciliUrun(urunler[0]?.id ?? '');
+  }, [urunler, seciliUrun]);
+
+  const urun = urunler.find((u) => u.id === seciliUrun || u.id === Number(seciliUrun));
 
   // Adet/miktar girince otomatik hesaplamalar
   const birimSure = urun?.birimSure ?? 0;
@@ -49,10 +74,9 @@ const SiparisOlustur = ({ isDark }) => {
   const toplamSatis = urun ? (urun.birimFiyat * miktar).toFixed(2) : '0.00';
   const kar = urun ? (miktar * (urun.birimFiyat - birimMaliyet)).toFixed(2) : '0.00';
 
-  // Açık siparişlere göre kapasite doluluk (saat bazlı)
-  const acikSiparisler = MOCK_SIPARISLER.filter((s) => ACIK_SIPARIS_DURUMLARI.includes(s.durum));
+  const acikSiparisler = siparisler.filter((s) => ACIK_SIPARIS_DURUMLARI.includes(s.durum));
   const acikToplamSure = acikSiparisler.reduce((acc, s) => {
-    const u = MOCK_URUNLER.find((x) => x.id === s.urunId);
+    const u = urunler.find((x) => x.id === s.urunId);
     return acc + s.miktar * (u?.birimSure ?? 0);
   }, 0);
   const yeniSiparisSure = tahminiSure;
@@ -61,9 +85,25 @@ const SiparisOlustur = ({ isDark }) => {
   const acikYuzde = Math.min(100, (acikToplamSure / KAPASITE_SAAT) * 100);
   const yeniSiparisYuzde = Math.min(100 - acikYuzde, (yeniSiparisSure / KAPASITE_SAAT) * 100);
 
-  const handleSiparisEkle = (e) => {
+  const handleSiparisEkle = async (e) => {
     e.preventDefault();
-    toast('Sipariş oluşturuldu');
+    const musteri = musterilerDropdown.find((m) => m.id === seciliMusteri || String(m.id) === String(seciliMusteri));
+    const musteriAdi = musteri?.unvan ?? '';
+    const urunAdi = urun?.ad ?? '';
+    if (!musteriAdi || !urunAdi) {
+      toast('Lütfen müşteri ve ürün seçin.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await createSiparis(musteriAdi, urunAdi, miktar);
+      toast('Sipariş oluşturuldu');
+      getSiparisler().then(setSiparisler).catch(() => setSiparisler([]));
+    } catch (err) {
+      toast(err?.message || 'Sipariş oluşturulamadı');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -77,7 +117,7 @@ const SiparisOlustur = ({ isDark }) => {
           <div className="min-w-0">
             <ThemeDropdown
               label="Müşteri"
-              options={MOCK_MUSTERILER}
+              options={musterilerDropdown}
               value={seciliMusteri}
               onChange={setSeciliMusteri}
               renderLabel={(m) => m.unvan}
@@ -88,9 +128,9 @@ const SiparisOlustur = ({ isDark }) => {
           <div className="min-w-0">
             <ThemeDropdown
               label="Ürün"
-              options={MOCK_URUNLER}
+              options={urunler}
               value={seciliUrun}
-              onChange={setSeciliUrun}
+              onChange={(v) => setSeciliUrun(v)}
               renderLabel={(u) => `${u.ad} (${u.birim})`}
               placeholder="Ürün seçin"
               isDark={isDark}
@@ -116,9 +156,10 @@ const SiparisOlustur = ({ isDark }) => {
             </div>
             <button
               type="submit"
-              className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors mt-2"
+              disabled={submitting || !urunler.length}
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors mt-2 disabled:opacity-50"
             >
-              <ShoppingCart size={18} /> Sipariş Ekle
+              <ShoppingCart size={18} /> {submitting ? 'Ekleniyor...' : 'Sipariş Ekle'}
             </button>
           </div>
         </form>
@@ -177,26 +218,26 @@ const SiparisOlustur = ({ isDark }) => {
               </tr>
             </thead>
             <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-100'}`}>
-              {MOCK_SIPARISLER.map((s) => {
-                const m = MOCK_MUSTERILER.find((x) => x.id === s.musteriId);
-                const u = MOCK_URUNLER.find((x) => x.id === s.urunId);
+              {siparisler.map((s) => {
+                const m = musterilerDropdown.find((x) => x.id === s.musteriId);
+                const u = urunler.find((x) => x.id === s.urunId);
                 const toplam = (s.miktar * s.birimFiyat).toFixed(2);
                 const tahminiSureSatir = tahminiUretimSuresiMetin(s.miktar, u?.gunlukUretim);
                 return (
                   <tr
-                    key={s.no}
+                    key={s.id ?? s.no ?? s.urunId + '-' + s.miktar}
                     className={`transition duration-150 ${isDark ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'}`}
                   >
-                    <td className={`py-4 px-6 font-mono ${textSub}`}>{s.no}</td>
-                    <td className={`py-4 px-6 font-medium ${textTitle}`}>{m?.unvan ?? s.musteriId}</td>
-                    <td className={`py-4 px-6 ${textSub}`}>{u?.ad ?? s.urunId}</td>
+                    <td className={`py-4 px-6 font-mono ${textSub}`}>{s.no ?? `SIP-${s.id}`}</td>
+                    <td className={`py-4 px-6 font-medium ${textTitle}`}>{m?.unvan ?? s.musteriAdi ?? s.musteriId ?? '—'}</td>
+                    <td className={`py-4 px-6 ${textSub}`}>{u?.ad ?? s.urunAdi ?? s.urunId ?? '—'}</td>
                     <td className={`py-4 px-6 font-bold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                       {s.miktar} {u?.birim ?? ''}
                     </td>
                     <td className={`py-4 px-6 ${textSub}`}>{tahminiSureSatir}</td>
                     <td className={`py-4 px-6 ${textSub}`}>{s.birimFiyat} ₺</td>
                     <td className={`py-4 px-6 font-semibold ${textTitle}`}>{toplam} ₺</td>
-                    <td className={`py-4 px-6 ${textSub}`}>{s.tarih}</td>
+                    <td className={`py-4 px-6 ${textSub}`}>{s.tarih ?? '—'}</td>
                     <td className="py-4 px-6">
                       <span className={`text-xs font-bold px-3 py-1 rounded-full border ${durumRenk(s.durum, isDark)}`}>
                         {s.durum}

@@ -1,8 +1,8 @@
 import React from 'react';
-import { ArrowLeft, Users } from 'lucide-react';
+import { ArrowLeft, Users, Pencil } from 'lucide-react';
 import { getThemeClasses } from 'utils/theme';
 
-const PersonelBilgi = ({ isDark, person, onBack }) => {
+const PersonelBilgi = ({ isDark, person, onBack, onEdit }) => {
   const { bgCard, textTitle, textSub, borderCol } = getThemeClasses(isDark);
 
   if (!person) {
@@ -30,6 +30,15 @@ const PersonelBilgi = ({ isDark, person, onBack }) => {
         <button type="button" onClick={onBack} className={linkCls}>
           <ArrowLeft size={18} /> Listeye dön
         </button>
+        {onEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors`}
+          >
+            <Pencil size={18} /> Düzenle
+          </button>
+        )}
       </div>
 
       <div className={`mb-6 pb-4 border-b ${borderCol}`}>
@@ -39,7 +48,7 @@ const PersonelBilgi = ({ isDark, person, onBack }) => {
           </div>
           <div>
             <h2 className={`text-2xl font-bold ${textTitle}`}>{person.firstName} {person.lastName}</h2>
-            <div className={`text-sm ${textSub}`}>{person.department || '—'} · {person.pozisyon || '—'}</div>
+            <div className={`text-sm ${textSub}`}>{person.pozisyon || '—'}</div>
           </div>
         </div>
       </div>
@@ -56,10 +65,6 @@ const PersonelBilgi = ({ isDark, person, onBack }) => {
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <div className={`text-xs font-medium uppercase tracking-wider ${textSub}`}>Departman</div>
-            <div className={`font-medium ${textTitle}`}>{person.department ?? '—'}</div>
-          </div>
           <div>
             <div className={`text-xs font-medium uppercase tracking-wider ${textSub}`}>Pozisyon</div>
             <div className={`font-medium ${textTitle}`}>{person.pozisyon ?? '—'}</div>
