@@ -66,7 +66,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// --- 4. CORS ---
+// --- 4. CORS (401/404 yanıtlarında da CORS başlıkları gitsin diye en başta uygulanır) ---
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("HerkesGelsin", policyBuilder =>
@@ -74,7 +74,8 @@ builder.Services.AddCors(options =>
         policyBuilder
             .AllowAnyOrigin()
             .AllowAnyMethod()
-            .AllowAnyHeader();
+            .AllowAnyHeader()
+            .WithExposedHeaders("Content-Disposition");
     });
 });
 
@@ -102,16 +103,19 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// --- 6. MIDDLEWARE SIRALAMASI ---
+// --- 6. MIDDLEWARE SIRALAMASI (CORS en başta; 401/CORS hatalarını önler) ---
+app.UseCors("HerkesGelsin");
 app.UseSwagger();
 app.UseSwaggerUI(c => {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Fabrika API V1");
     c.RoutePrefix = string.Empty; 
 });
 
-app.UseCors("HerkesGelsin"); 
 app.UseAuthentication(); 
 app.UseAuthorization();
+
+// Health check (404 test için: GET /api/health)
+app.MapGet("/api/health", () => Results.Ok(new { status = "ok", api = "FabrikaBackend" })).AllowAnonymous();
 app.MapControllers();
 
 app.Run();

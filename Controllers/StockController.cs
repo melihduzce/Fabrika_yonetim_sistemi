@@ -7,8 +7,9 @@ using System.Threading.Tasks;
 
 namespace FabrikaBackend.Controllers;
 
-[Route("api/stock")] // Frontend rehberindeki API rotasına uyum sağladık
+[Route("api/stock")]
 [ApiController]
+[Microsoft.AspNetCore.Authorization.AllowAnonymous]
 public class StockController : ControllerBase
 {
     private readonly AppDbContext _context;

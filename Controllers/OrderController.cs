@@ -20,6 +20,7 @@ public class OrderStatusUpdateRequest
 
 [Route("api/orders")]
 [ApiController]
+[Microsoft.AspNetCore.Authorization.AllowAnonymous]
 public class OrderController : ControllerBase
 {
     private readonly AppDbContext _context;

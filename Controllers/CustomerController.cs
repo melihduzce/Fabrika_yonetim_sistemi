@@ -7,6 +7,7 @@ namespace FabrikaBackend.Controllers;
 
 [Route("api/musteriler")]
 [ApiController]
+[Microsoft.AspNetCore.Authorization.AllowAnonymous]
 public class CustomerController : ControllerBase
 {
     private readonly AppDbContext _context;
