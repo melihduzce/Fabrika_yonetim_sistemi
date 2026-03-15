@@ -6,9 +6,11 @@ namespace FabrikaBackend.Models;
 public class Machine
 {
     [Key]
-    public int Id { get; set; } // Veritabanı için gizli kimlik
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
 
-    public int ProductId { get; set; } // Bu makine hangi ürüne ait?
+    [JsonPropertyName("productId")]
+    public int ProductId { get; set; }
 
     [JsonPropertyName("machine_name")]
     public string MachineName { get; set; } = string.Empty;

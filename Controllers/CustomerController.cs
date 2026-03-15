@@ -17,11 +17,20 @@ public class CustomerController : ControllerBase
         _context = context;
     }
 
-    // 1. GET: api/musteriler (Tüm müşterileri listele - Front-end'in istediği)
+    // 1. GET: api/musteriler (Tüm müşterileri listele)
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Customer>>> GetCustomers()
     {
         return await _context.Customers.ToListAsync();
+    }
+
+    // 2. GET: api/musteriler/{id} (Frontend uyumu: tek müşteri)
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Customer>> GetCustomer(string id)
+    {
+        var customer = await _context.Customers.FindAsync(id);
+        if (customer == null) return NotFound("Müşteri bulunamadı.");
+        return customer;
     }
 
     // 3. POST: api/musteriler (Yeni Müşteri Ekle - Admin için!)

@@ -24,7 +24,7 @@ public class ProductController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Product>> GetProduct(int id)
+    public async Task<ActionResult<Product>> GetProduct(int id) // String olan id'yi int yaptık
     {
         var product = await _context.Products.FindAsync(id);
         if (product == null) return NotFound("Product not found.");
@@ -40,7 +40,7 @@ public class ProductController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateProduct(int id, Product product)
+    public async Task<IActionResult> UpdateProduct(int id, Product product) // String olan id'yi int yaptık
     {
         if (id != product.Id) return BadRequest("ID mismatch.");
 
@@ -60,7 +60,7 @@ public class ProductController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteProduct(int id)
+    public async Task<IActionResult> DeleteProduct(int id) // String olan id'yi int yaptık
     {
         var product = await _context.Products.FindAsync(id);
         if (product == null) return NotFound("Product not found.");

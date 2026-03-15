@@ -6,10 +6,19 @@ using System.Net.Http.Json; // Python'a JSON göndermek için şart!
 
 namespace FabrikaBackend.Controllers;
 
+/// <summary>Backend: productId + quantity veya frontend: musteri_adi + urun_adi + miktar.</summary>
 public class OrderCreateRequest
 {
+    [System.Text.Json.Serialization.JsonPropertyName("productId")]
     public int ProductId { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("quantity")]
     public int Quantity { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("musteri_adi")]
+    public string? MusteriAdi { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("urun_adi")]
+    public string? UrunAdi { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("miktar")]
+    public int Miktar { get; set; }
 }
 
 // YENİ: Sadece durumu güncellemek için özel model
@@ -32,57 +41,111 @@ public class OrderController : ControllerBase
         _httpClient = httpClient;
     }
 
-    // FİLTRELİ GET METODU (Örn: ?status=pending)
+    static string? NormalizeOrderStatus(string? durum)
+    {
+        if (string.IsNullOrWhiteSpace(durum)) return null;
+        var d = durum.Trim().ToLowerInvariant();
+        if (d == "pending" || d == "beklemede") return "pending";
+        if (d == "in_production" || d == "üretimde" || d == "uretimde") return "in_production";
+        if (d == "completed" || d == "tamamlandı" || d == "tamamlandi" || d == "sevk edildi") return "completed";
+        if (d == "cancelled" || d == "iptal") return "cancelled";
+        return null;
+    }
+
+    // FİLTRELİ GET METODU (Örn: ?status=pending). Frontend uyumu: urun_adi/musteri_adi boşsa Product'tan doldurulur.
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Order>>> GetOrders([FromQuery] string? status)
     {
         var query = _context.Orders.AsQueryable();
-        
         if (!string.IsNullOrEmpty(status))
-        {
             query = query.Where(o => o.Status == status);
+        var list = await query.ToListAsync();
+        foreach (var o in list)
+        {
+            if (string.IsNullOrEmpty(o.UrunAdi))
+            {
+                var p = await _context.Products.FindAsync(o.ProductId);
+                o.UrunAdi = p?.HamMadde;
+            }
         }
-        
-        return await query.ToListAsync();
+        return list;
     }
 
-    // TEKİL GET METODU
+    // TEKİL GET METODU (Frontend: urun_adi boşsa Product'tan doldurulur)
     [HttpGet("{id}")]
     public async Task<ActionResult<Order>> GetOrder(int id)
     {
         var order = await _context.Orders.FindAsync(id);
         if (order == null) return NotFound("Order not found.");
+        if (string.IsNullOrEmpty(order.UrunAdi))
+        {
+            var p = await _context.Products.FindAsync(order.ProductId);
+            order.UrunAdi = p?.HamMadde;
+        }
         return order;
     }
 
+    /// <summary>Frontend: { musteri_adi, urun_adi, miktar } veya backend: { productId, quantity } kabul eder.</summary>
     [HttpPost]
-    public async Task<ActionResult<Order>> CreateOrder(OrderCreateRequest request)
+    public async Task<ActionResult<Order>> CreateOrder([FromBody] OrderCreateRequest request)
     {
-        var product = await _context.Products.FindAsync(request.ProductId);
-        if (product == null) return NotFound("Error: Product not found!");
+        if (request == null) return BadRequest("Geçersiz istek.");
 
-        // 1. SÜRE HESAPLAMA MANTIĞI
-        double netDailyCapacity = product.GunlukUretim * 0.85;
-        double estimatedDays = request.Quantity / netDailyCapacity;
-        if (product.HasHeatTreatment) estimatedDays += 1;
+        int productId;
+        int quantity;
+        string? musteriAdi = request.MusteriAdi?.Trim();
+        string? urunAdi = request.UrunAdi?.Trim();
+
+        if (request.Miktar > 0 && !string.IsNullOrEmpty(urunAdi))
+        {
+            var product = await _context.Products
+                .FirstOrDefaultAsync(p =>
+                    p.UrunKodu == urunAdi ||
+                    p.HamMadde == urunAdi ||
+                    (p.HamMadde != null && p.HamMadde.Contains(urunAdi)));
+            if (product == null) return NotFound("Ürün bulunamadı: " + urunAdi);
+            productId = product.Id;
+            quantity = request.Miktar;
+            urunAdi = product.HamMadde ?? urunAdi;
+        }
+        else if (request.ProductId > 0 && request.Quantity > 0)
+        {
+            productId = request.ProductId;
+            quantity = request.Quantity;
+            var product = await _context.Products.FindAsync(productId);
+            if (product == null) return NotFound("Product not found.");
+            urunAdi = product.HamMadde;
+        }
+        else
+            return BadRequest("productId+quantity veya urun_adi+miktar gerekli.");
+
+        var productEntity = await _context.Products.FindAsync(productId);
+        if (productEntity == null) return NotFound("Product not found.");
+
+        double netDailyCapacity = productEntity.GunlukUretim * 0.85;
+        if (netDailyCapacity <= 0) netDailyCapacity = 1;
+        double estimatedDays = quantity / netDailyCapacity;
+        if (productEntity.HasHeatTreatment) estimatedDays += 1;
 
         var newOrder = new Order
         {
-            ProductId = request.ProductId,
-            Quantity = request.Quantity,
+            ProductId = productId,
+            Quantity = quantity,
             EstimatedDays = Math.Round(estimatedDays, 2),
-            TotalCost = product.BaseCost * request.Quantity,
-            SalePrice = (product.BaseCost * request.Quantity) * 1.5,
-            Status = "pending", // Yeni siparişler varsayılan olarak bekliyor
-            CreatedAt = DateTime.UtcNow
+            TotalCost = productEntity.BaseCost * quantity,
+            SalePrice = (productEntity.BaseCost * quantity) * 1.5,
+            Status = "pending",
+            CreatedAt = DateTime.UtcNow,
+            MusteriAdi = musteriAdi,
+            UrunAdi = urunAdi
         };
 
         _context.Orders.Add(newOrder);
         await _context.SaveChangesAsync();
 
         // --- 🤖 AI TETİKLEYİCİSİ (EVENT-DRIVEN) ---
-        double capacityUtilization = (request.Quantity / product.MonthlyCapacity) * 100;
-        bool isCriticalOrder = request.Quantity > (product.MonthlyCapacity * 0.20);
+        double capacityUtilization = (quantity / productEntity.MonthlyCapacity) * 100;
+        bool isCriticalOrder = quantity > (productEntity.MonthlyCapacity * 0.20);
 
         if (capacityUtilization > 85 || isCriticalOrder)
         {
@@ -115,14 +178,15 @@ public class OrderController : ControllerBase
         var order = await _context.Orders.FindAsync(id);
         if (order == null) return NotFound("Order not found.");
 
-        // İzin verilen durumlar
+        // Frontend uyumu: Türkçe veya İngilizce durum kabul edilir
+        var status = NormalizeOrderStatus(request.Status);
         var allowedStatuses = new[] { "pending", "in_production", "completed", "cancelled" };
-        if (!allowedStatuses.Contains(request.Status))
+        if (string.IsNullOrEmpty(status) || !allowedStatuses.Contains(status))
         {
-            return BadRequest("Invalid status. Allowed values: pending, in_production, completed, cancelled");
+            return BadRequest("Geçersiz durum. Örnek: Beklemede, Üretimde, Tamamlandı, İptal");
         }
 
-        order.Status = request.Status;
+        order.Status = status;
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Status updated successfully", new_status = order.Status });

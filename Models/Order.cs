@@ -30,4 +30,12 @@ public class Order
 
     [JsonPropertyName("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>Frontend uyumu: sipariş listesinde müşteri adı.</summary>
+    [JsonPropertyName("musteri_adi")]
+    public string? MusteriAdi { get; set; }
+
+    /// <summary>Frontend uyumu: sipariş listesinde ürün adı.</summary>
+    [JsonPropertyName("urun_adi")]
+    public string? UrunAdi { get; set; }
 }
