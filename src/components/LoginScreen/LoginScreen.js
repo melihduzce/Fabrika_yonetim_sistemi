@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { login as apiLogin } from 'services/authService';
 import { Eye, EyeOff } from 'lucide-react';
 
 const REMEMBER_KEY = 'fabrika_remember';
@@ -8,16 +9,33 @@ const LoginScreen = ({ onLogin, onGoToRegister }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => typeof window !== 'undefined' && !!localStorage.getItem(REMEMBER_KEY));
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onLogin(rememberMe);
+    setError('');
+    setLoading(true);
+    try {
+      await apiLogin(email, password, rememberMe);
+      onLogin(rememberMe);
+    } catch (err) {
+      setError(err?.message || 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="flex h-screen bg-gray-900 items-center justify-center py-8 overflow-y-auto">
       <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-96 border border-gray-700">
         <h2 className="text-2xl font-bold text-white mb-6 text-center">Fabrika YS Giriş</h2>
+
+        {error && (
+          <div className="mb-4 text-sm text-red-400 bg-red-900/40 border border-red-700 rounded px-3 py-2">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -61,9 +79,10 @@ const LoginScreen = ({ onLogin, onGoToRegister }) => {
           </label>
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200"
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-900 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded transition duration-200"
           >
-            Sisteme Giriş Yap
+            {loading ? 'Giriş yapılıyor...' : 'Sisteme Giriş Yap'}
           </button>
         </form>
 

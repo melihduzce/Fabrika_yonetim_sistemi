@@ -1,8 +1,8 @@
 import { api } from './api';
 import { stockFromApi, stockToApi } from './mappers';
 
-/** Backend: GET /api/stock (liste) */
-const STOCK_BASE = '/api/stock';
+/** Backend: GET /api/stok (liste) — backend-api-spec.json ile uyumlu */
+const STOCK_BASE = '/api/stok';
 
 export async function getStok() {
   const list = await api.get(STOCK_BASE);
