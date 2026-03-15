@@ -5,8 +5,9 @@ using FabrikaBackend.Models;
 
 namespace FabrikaBackend.Controllers;
 
-[Route("api/products")] // Dokümana uygun rota
+[Route("api/products")]
 [ApiController]
+[Microsoft.AspNetCore.Authorization.AllowAnonymous]
 public class ProductController : ControllerBase
 {
     private readonly AppDbContext _context;

@@ -7,6 +7,7 @@ namespace FabrikaBackend.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Microsoft.AspNetCore.Authorization.AllowAnonymous]
 public class PersonnelController : ControllerBase
 {
     private readonly AppDbContext _context;

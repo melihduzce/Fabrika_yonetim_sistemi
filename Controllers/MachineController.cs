@@ -7,6 +7,7 @@ namespace FabrikaBackend.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Microsoft.AspNetCore.Authorization.AllowAnonymous]
 public class MachineController : ControllerBase
 {
     private readonly AppDbContext _context;
