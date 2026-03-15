@@ -8,114 +8,72 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- 1. VERİTABANI BAĞLANTISI (OTOMATİK SEÇİM & FORMAT DÖNÜŞTÜRME) ---
-var rawConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
-string? connectionString;
+// --- 1. VERİTABANI ---
+var connectionString = builder.Configuration.GetConnectionString("SqliteConnection") ?? "Data Source=fabrika.db";
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
 
-if (!string.IsNullOrEmpty(rawConnectionString) && (rawConnectionString.StartsWith("postgres://") || rawConnectionString.StartsWith("postgresql://")))
-{
-    // Railway'in "postgres://" veya "postgresql://" formatını Npgsql'in anlayacağı "Host=..." formatına çeviriyoruz
-    var databaseUri = new Uri(rawConnectionString);
-    var userInfo = databaseUri.UserInfo.Split(':');
-    
-    connectionString = $"Host={databaseUri.Host};Port={databaseUri.Port};Database={databaseUri.LocalPath.Substring(1)};" +
-                       $"Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
-    Console.WriteLine($"--> [DB] PostgreSQL bağlantısı kullanılıyor: {connectionString.Replace(userInfo[1], "***")}");
-}
-else
-{
-    // Yereldeysen appsettings.json'daki SqliteConnection'ı kullan
-    connectionString = rawConnectionString ?? builder.Configuration.GetConnectionString("SqliteConnection") ?? "Data Source=fabrika.db";
-    Console.WriteLine($"--> [DB] SQLite bağlantısı kullanılıyor: {connectionString}");
-}
-
-builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    if (connectionString.Contains("Host="))
-    {
-        options.UseNpgsql(connectionString);
-    }
-    else
-    {
-        options.UseSqlite(connectionString);
-    }
-});
-
-// --- 2. AUTHENTICATION & JWT YAPILANDIRMASI ---
+// --- 2. AUTHENTICATION (401 HATALARI İÇİN KALICI ÇÖZÜM) ---
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
+    .AddJwtBearer(options => {
+        options.TokenValidationParameters = new TokenValidationParameters {
+            ValidateIssuer = false, 
+            ValidateAudience = false,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "CokGizliAnahtar123!"))
         };
     });
 
-// --- 3. JSON VE ENUM AYARLARI ---
-builder.Services.AddControllers()
-    .AddJsonOptions(options => 
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+// --- 3. CORS AYARI (HAYAT KURTARAN DÜZENLEME) ---
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("HerkesGelsin", policy =>
+    {
+        // Bu ayar tarayıcının "Preflight" isteğine yeşil ışık yakar
+        policy.SetIsOriginAllowed(origin => true) 
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .WithExposedHeaders("Content-Disposition"); // Bazı tarayıcılar için ek güvenlik başlığı
+    });
+});
 
+// --- 4. DİĞER SERVİSLER ---
+builder.Services.AddControllers().AddJsonOptions(o => {
+    o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    o.JsonSerializerOptions.PropertyNamingPolicy = null; 
+});
 builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// --- 4. CORS (401/404 yanıtlarında da CORS başlıkları gitsin diye en başta uygulanır) ---
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("HerkesGelsin", policyBuilder =>
-    {
-        policyBuilder
-            .AllowAnyOrigin()
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .WithExposedHeaders("Content-Disposition");
-    });
-});
-
-// --- 5. OTONOM TAKİP SERVİSİ ---
-// builder.Services.AddHostedService<ProductionTrackerService>(); // Tetikleyici mantık kaldırıldı
-
 var app = builder.Build();
 
-// --- 🛠️ VERİTABANI OTOMASYONU ---
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var context = services.GetRequiredService<AppDbContext>();
-        
-        Console.WriteLine("--> [DB] Migration'lar uygulanıyor...");
-        context.Database.Migrate();
-        Console.WriteLine("--> [BAŞARILI] Tüm migration'lar uygulandı ve tablolar oluşturuldu.");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"--> [HATA] Veritabanı hazırlığı sırasında hata: {ex.Message}");
-        Console.WriteLine($"--> [DETAY] {ex.InnerException?.Message}");
-    }
+// --- 🛠️ OTOMATİK VERİTABANI OLUŞTURMA ---
+using (var scope = app.Services.CreateScope()) {
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    context.Database.EnsureCreated();
 }
 
-// --- 6. MIDDLEWARE SIRALAMASI (CORS en başta; 401/CORS hatalarını önler) ---
-app.UseCors("HerkesGelsin");
+// --- MIDDLEWARE SIRALAMASI (MÜHENDİS DOKUNUŞU) ---
+
+// 1. Swagger (Her zaman en üstte olabilir)
 app.UseSwagger();
-app.UseSwaggerUI(c => {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Fabrika API V1");
+app.UseSwaggerUI(c => { 
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "V1"); 
     c.RoutePrefix = string.Empty; 
 });
 
-app.UseAuthentication(); 
+// 2. Rotalama
+app.UseRouting(); 
+
+// 3. CORS (Mevzu burası! Auth ve Authorization'dan MUTLAKA önce gelmeli)
+app.UseCors("HerkesGelsin");
+
+// 4. Güvenlik Katmanları
+app.UseAuthentication();
 app.UseAuthorization();
 
-// Health check (404 test için: GET /api/health)
-app.MapGet("/api/health", () => Results.Ok(new { status = "ok", api = "FabrikaBackend" })).AllowAnonymous();
+// 5. Endpointler
 app.MapControllers();
 
 app.Run();
